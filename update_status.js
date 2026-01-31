@@ -11,11 +11,11 @@ const { execSync } = require('child_process');
 
 // Configuration for Document Scanning
 const DOC_PATHS = [
-    { dir: '.', pattern: /README\.md$/i },
-    { dir: 'ecommerce', pattern: /\.md$/i },
-    { dir: 'rental', pattern: /\.md$/i },
-    { dir: 'memory', pattern: /\.md$/i },
-    { dir: 'docs', pattern: /\.(md|txt)$/i }
+    { dir: '.', pattern: /README\.md$/i, tag: 'Guide', icon: 'book' },
+    { dir: 'ecommerce', pattern: /\.md$/i, tag: 'Research', icon: 'shopping-bag' },
+    { dir: 'rental', pattern: /\.md$/i, tag: 'Property', icon: 'home' },
+    { dir: 'memory', pattern: /\.md$/i, tag: 'History', icon: 'brain' },
+    { dir: 'docs', pattern: /\.(md|txt)$/i, tag: 'Doc', icon: 'file-text' }
 ];
 
 function scanDocuments() {
@@ -41,6 +41,16 @@ function scanDocuments() {
                         } catch (e) {}
                     }
 
+                    let icon = config.icon;
+                    let tag = config.tag;
+
+                    // Specialized overrides
+                    const lowerFile = file.toLowerCase();
+                    if (lowerFile.includes('security')) { icon = 'shield-alert'; tag = 'Security'; }
+                    else if (lowerFile.includes('automation')) { icon = 'zap'; tag = 'Automation'; }
+                    else if (lowerFile.includes('pulse')) { icon = 'sun'; tag = 'AI Pulse'; }
+                    else if (lowerFile.includes('overnight')) { icon = 'moon'; tag = 'Overnight'; }
+
                     docs.push({
                         id: Buffer.from(filePath).toString('base64'),
                         title: title,
@@ -48,7 +58,9 @@ function scanDocuments() {
                         created: stats.birthtime.toISOString(),
                         updated: stats.mtime.toISOString(),
                         size: stats.size,
-                        category: config.dir === '.' ? 'Root' : config.dir
+                        category: config.dir === '.' ? 'Root' : config.dir,
+                        tag: tag,
+                        icon: icon
                     });
                 }
             });

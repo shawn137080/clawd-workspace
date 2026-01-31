@@ -6,7 +6,9 @@
     "created": "2026-01-31T17:33:08.255Z",
     "updated": "2026-01-31T17:35:57.307Z",
     "size": 3434,
-    "category": "Root"
+    "category": "Root",
+    "tag": "Guide",
+    "icon": "book"
   },
   {
     "id": "bWVtb3J5LzIwMjYtMDEtMzAubWQ=",
@@ -15,7 +17,9 @@
     "created": "2026-01-30T20:50:11.027Z",
     "updated": "2026-01-30T20:50:11.027Z",
     "size": 1721,
-    "category": "memory"
+    "category": "memory",
+    "tag": "History",
+    "icon": "brain"
   },
   {
     "id": "cmVudGFsL1BMQU4ubWQ=",
@@ -24,7 +28,9 @@
     "created": "2026-01-30T20:33:06.615Z",
     "updated": "2026-01-30T20:33:34.869Z",
     "size": 1125,
-    "category": "rental"
+    "category": "rental",
+    "tag": "Property",
+    "icon": "home"
   },
   {
     "id": "ZWNvbW1lcmNlL1JFU0VBUkNIX1BMQU4ubWQ=",
@@ -33,6 +39,8 @@
     "created": "2026-01-30T20:27:04.756Z",
     "updated": "2026-01-30T20:27:04.756Z",
     "size": 723,
-    "category": "ecommerce"
+    "category": "ecommerce",
+    "tag": "Research",
+    "icon": "shopping-bag"
   }
 ]
