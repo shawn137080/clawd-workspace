@@ -155,7 +155,7 @@ const PRICING = {
     'gemini-3-flash-preview': { input: 0.1, output: 0.4 },
     'deepseek-r1-distill-llama-70b': { input: 0.59, output: 0.79 },
     'claude-3-5-sonnet': { input: 3.0, output: 15.0 },
-    'default': { input: 0.5, output: 1.5 }
+    'default': { input: 0.95, output: 4.75 }
 };
 
 function getAgentData() {
@@ -171,10 +171,16 @@ function getAgentData() {
 
         const sessions = data.sessions.map(s => {
             const ageMs = s.ageMs || (now - s.updatedAt);
-            const status = ageMs < 60000 ? 'RUNNING' : 'COMPLETED';
+            const status = ageMs < 600000 ? (ageMs < 60000 ? 'RUNNING' : 'COMPLETED') : 'EXPIRED';
             
-            const keyParts = s.key.split(':');
-            let label = keyParts[keyParts.length - 1];
+            if (s.key === 'agent:main:main' || status === 'EXPIRED') return null;
+
+            let label = s.label;
+            if (!label) {
+                const keyParts = s.key.split(':');
+                label = keyParts[keyParts.length - 1];
+            }
+            
             const isSubagent = s.key.includes(':subagent:');
             const agentName = isSubagent ? `Sub-Agent (${label.substring(0,8)})` : 'Zac (Main)';
             
@@ -182,26 +188,28 @@ function getAgentData() {
                 label = isSubagent ? 'Specialist Agent' : 'Main Zac';
             }
 
-            let task = 'Processing...';
-            try {
-                const jsonlPath = path.join(sessionsDir, `${s.sessionId}.jsonl`);
-                if (fs.existsSync(jsonlPath)) {
-                    const content = fs.readFileSync(jsonlPath, 'utf8');
-                    const lines = content.split('\n');
-                    for (const line of lines) {
-                        if (!line.trim()) continue;
-                        const entry = JSON.parse(line);
-                        if (entry.type === 'message' && entry.message && entry.message.role === 'user') {
-                            const textContent = entry.message.content.find(c => c.type === 'text');
-                            if (textContent) {
-                                task = textContent.text.split('\n')[0].substring(0, 100);
-                                if (textContent.text.length > 100) task += '...';
-                                break;
+            let task = s.task || 'Processing...';
+            if (task === 'Processing...') {
+                try {
+                    const jsonlPath = path.join(sessionsDir, `${s.sessionId}.jsonl`);
+                    if (fs.existsSync(jsonlPath)) {
+                        const content = fs.readFileSync(jsonlPath, 'utf8');
+                        const lines = content.split('\n');
+                        for (const line of lines) {
+                            if (!line.trim()) continue;
+                            const entry = JSON.parse(line);
+                            if (entry.type === 'message' && entry.message && entry.message.role === 'user') {
+                                const textContent = entry.message.content.find(c => c.type === 'text');
+                                if (textContent) {
+                                    task = textContent.text.split('\n')[0].substring(0, 100);
+                                    if (textContent.text.length > 100) task += '...';
+                                    break;
+                                }
                             }
                         }
                     }
-                }
-            } catch (err) {}
+                } catch (err) {}
+            }
 
             const modelKey = s.model || 'default';
             const pricing = PRICING[modelKey] || PRICING.default;
@@ -245,12 +253,12 @@ function getAgentData() {
                 updatedAt: s.updatedAt,
                 ageMs: ageMs
             };
-        });
+        }).filter(s => s !== null);
 
         fs.writeFileSync('usage_stats.json', JSON.stringify(usageStats.sort((a,b) => b.timestamp - a.timestamp), null, 2));
         fs.writeFileSync('activity_log.json', JSON.stringify(activityLog.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)), null, 2));
 
-        return sessions.filter(agent => agent.status === 'RUNNING');
+        return sessions;
     } catch (e) {
         console.error('Error fetching sessions:', e);
         return [];
