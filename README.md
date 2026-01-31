@@ -24,10 +24,10 @@ A localized engine for navigating the competitive Greater Toronto Area real esta
 
 ## 🛰️ Mission Control Dashboard
 
-The workspace features a centralized dashboard (`DASHBOARD.html`) for at-a-glance status updates.
+The workspace features a centralized dashboard for at-a-glance status updates.
 
-- **How to use:** Open `DASHBOARD.html` in any browser to see the current status of all active projects, priority levels, and upcoming tasks.
-- **Live Sync:** Zac automatically updates this dashboard during his heartbeat checks to ensure the data stays fresh.
+- **Live Dashboard:** [View Mission Control](https://shawn137080.github.io/clawd-workspace/)
+- **How it works:** Zac automatically updates this dashboard during his heartbeat checks to ensure the data stays fresh.
 
 ---
 
@@ -49,7 +49,7 @@ Unlike standard AI assistants that wait for a prompt, Zac uses an **Automated He
 ├── 📂 rental/            # Property hunting logic and market analysis
 ├── 📂 memory/            # Zac's persistent memory and heartbeat state
 ├── 📂 skills/            # Custom tool extensions (search, sonos, etc.)
-├── 📄 DASHBOARD.html     # Mission Control (The visual UI)
+├── 📄 index.html         # Mission Control (The visual UI)
 ├── 📄 HEARTBEAT.md       # Logic for proactive checks
 ├── 📄 TASKS.md           # The global to-do list
 ├── 📄 SOUL.md            # Zac's personality and core guidelines
