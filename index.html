@@ -232,6 +232,14 @@
                                     <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"></i>
                                     <input type="text" id="docs-search" oninput="filterDocs()" placeholder="Search documents..." class="w-full bg-zinc-950 border border-zinc-800 rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all">
                                 </div>
+                                <!-- Category Filter Pills -->
+                                <div id="docs-filter-container" class="flex flex-wrap gap-1.5 mt-1">
+                                    <button onclick="setDocFilter('ALL')" data-filter="ALL" class="doc-filter-btn px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-700/50">ALL</button>
+                                    <button onclick="setDocFilter('GUIDE')" data-filter="GUIDE" class="doc-filter-btn px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-700/50">GUIDE</button>
+                                    <button onclick="setDocFilter('HISTORY')" data-filter="HISTORY" class="doc-filter-btn px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-700/50">HISTORY</button>
+                                    <button onclick="setDocFilter('RESEARCH')" data-filter="RESEARCH" class="doc-filter-btn px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-700/50">RESEARCH</button>
+                                    <button onclick="setDocFilter('PLAN')" data-filter="PLAN" class="doc-filter-btn px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-700/50">PLAN</button>
+                                </div>
                             </div>
                             <div id="docs-list" class="flex-1 overflow-y-auto p-2 space-y-1">
                                 <!-- Docs items injected here -->
@@ -681,24 +689,43 @@
 
         let docsData = [];
         let currentDocId = null;
+        let currentDocFilter = 'RESEARCH';
 
         async function fetchDocsIndex() {
             try {
                 const res = await fetch(`docs_index.json?t=${Date.now()}`);
                 if (res.ok) {
                     docsData = await res.json();
-                    renderDocsList(docsData);
+                    filterDocs(); // Apply initial filter
                 }
             } catch (e) { console.error(e); }
         }
 
+        function setDocFilter(filter) {
+            currentDocFilter = filter;
+            filterDocs();
+        }
+
         function filterDocs() {
             const query = document.getElementById('docs-search').value.toLowerCase();
-            const filtered = docsData.filter(d => 
-                d.title.toLowerCase().includes(query) || 
-                d.tag.toLowerCase().includes(query) ||
-                d.path.toLowerCase().includes(query)
-            );
+            
+            // Update Filter Button Styles
+            document.querySelectorAll('.doc-filter-btn').forEach(btn => {
+                const filter = btn.dataset.filter;
+                if (filter === currentDocFilter) {
+                    btn.className = "doc-filter-btn px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all bg-blue-600 text-white border border-blue-500 shadow-lg shadow-blue-500/20";
+                } else {
+                    btn.className = "doc-filter-btn px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-700/50";
+                }
+            });
+
+            const filtered = docsData.filter(d => {
+                const matchesQuery = d.title.toLowerCase().includes(query) || 
+                                   d.tag.toLowerCase().includes(query) ||
+                                   d.path.toLowerCase().includes(query);
+                const matchesFilter = currentDocFilter === 'ALL' || d.tag === currentDocFilter;
+                return matchesQuery && matchesFilter;
+            });
             renderDocsList(filtered);
         }
 
