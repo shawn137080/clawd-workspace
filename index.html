@@ -62,7 +62,15 @@
                 </div>
             </header>
 
-            <!-- Progress Section -->
+            <!-- Tab Navigation -->
+            <nav class="flex gap-2 mb-8 bg-zinc-900/50 p-1 rounded-xl w-fit border border-zinc-800">
+                <button onclick="switchTab('kanban')" id="tab-kanban" class="px-6 py-2 rounded-lg text-sm font-bold transition-all bg-blue-600 text-white shadow-lg">Kanban</button>
+                <button onclick="switchTab('activity')" id="tab-activity" class="px-6 py-2 rounded-lg text-sm font-bold transition-all text-zinc-400 hover:text-white">Activity Log</button>
+                <button onclick="switchTab('usage')" id="tab-usage" class="px-6 py-2 rounded-lg text-sm font-bold transition-all text-zinc-400 hover:text-white">Usage Stats</button>
+            </nav>
+
+            <div id="view-kanban" class="tab-view">
+                <!-- Progress Section -->
             <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
                 <div class="glass p-5 rounded-xl">
                     <div class="flex justify-between items-center mb-4">
@@ -178,6 +186,50 @@
                     <div class="text-zinc-500">Initializing thought stream...</div>
                 </div>
             </section>
+            </div><!-- End view-kanban -->
+
+            <div id="view-activity" class="tab-view hidden">
+                <section class="glass rounded-2xl overflow-hidden min-h-[600px]">
+                    <div class="bg-zinc-900/50 px-6 py-4 border-b border-zinc-800">
+                        <h2 class="text-lg font-bold flex items-center gap-2">
+                            <i data-lucide="history" class="text-emerald-500"></i>
+                            Activity History
+                        </h2>
+                    </div>
+                    <div id="activity-list" class="p-6 space-y-4">
+                        <!-- Activity entries -->
+                    </div>
+                </section>
+            </div>
+
+            <div id="view-usage" class="tab-view hidden">
+                <section class="glass rounded-2xl overflow-hidden min-h-[600px]">
+                    <div class="bg-zinc-900/50 px-6 py-4 border-b border-zinc-800 flex justify-between items-center">
+                        <h2 class="text-lg font-bold flex items-center gap-2">
+                            <i data-lucide="bar-chart-3" class="text-blue-500"></i>
+                            Token Usage & Costs
+                        </h2>
+                        <span id="total-cost" class="text-xl font-mono text-emerald-400 font-bold">$0.0000</span>
+                    </div>
+                    <div class="p-6 overflow-x-auto">
+                        <table class="w-full text-left text-sm font-mono">
+                            <thead>
+                                <tr class="text-zinc-500 border-b border-zinc-800">
+                                    <th class="pb-3 px-2">Task</th>
+                                    <th class="pb-3 px-2">Agent</th>
+                                    <th class="pb-3 px-2">Model</th>
+                                    <th class="pb-3 px-2">Input</th>
+                                    <th class="pb-3 px-2">Output</th>
+                                    <th class="pb-3 px-2">Cost (est)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usage-table-body" class="divide-y divide-zinc-800/50">
+                                <!-- Usage rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
         </div>
 
         <!-- Sub-Agent Activity Monitor (Sidebar) -->
@@ -514,6 +566,98 @@
                 t.classList.remove('translate-y-20', 'opacity-0');
                 setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3000);
             }
+        }
+
+        // Tab Switching Logic
+        function switchTab(tab) {
+            // Update UI
+            document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
+            document.getElementById(`view-${tab}`).classList.remove('hidden');
+            
+            // Update Buttons
+            ['kanban', 'activity', 'usage'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                if (t === tab) {
+                    btn.className = "px-6 py-2 rounded-lg text-sm font-bold transition-all bg-blue-600 text-white shadow-lg";
+                } else {
+                    btn.className = "px-6 py-2 rounded-lg text-sm font-bold transition-all text-zinc-400 hover:text-white";
+                }
+            });
+
+            if (tab === 'activity') fetchActivityLog();
+            if (tab === 'usage') fetchUsageStats();
+        }
+
+        async function fetchActivityLog() {
+            try {
+                const res = await fetch(`activity_log.json?t=${Date.now()}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    renderActivityLog(data);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function fetchUsageStats() {
+            try {
+                const res = await fetch(`usage_stats.json?t=${Date.now()}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    renderUsageStats(data);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function renderActivityLog(logs) {
+            const container = document.getElementById('activity-list');
+            if (!container) return;
+            
+            if (logs.length === 0) {
+                container.innerHTML = '<p class="text-zinc-500 italic">No activity recorded yet.</p>';
+                return;
+            }
+
+            container.innerHTML = logs.map(log => {
+                const date = new Date(log.timestamp);
+                const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const isMain = log.agent.includes('Main');
+                
+                return `
+                    <div class="flex gap-4 p-4 rounded-xl glass border-l-4 ${isMain ? 'border-l-blue-500' : 'border-l-purple-500'} bg-zinc-900/30">
+                        <div class="shrink-0 text-xs font-mono text-zinc-500 pt-1">${timeStr}</div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-xs font-bold uppercase tracking-wider ${isMain ? 'text-blue-400' : 'text-purple-400'}">${log.agent}</span>
+                                <span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-500 font-mono">${log.status}</span>
+                            </div>
+                            <p class="text-sm text-zinc-300">${log.action}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderUsageStats(stats) {
+            const tbody = document.getElementById('usage-table-body');
+            const totalEl = document.getElementById('total-cost');
+            if (!tbody) return;
+
+            let totalCost = 0;
+            tbody.innerHTML = stats.map(row => {
+                totalCost += parseFloat(row.cost);
+                return `
+                    <tr class="hover:bg-zinc-800/30 transition-colors">
+                        <td class="py-4 px-2 text-zinc-300 max-w-[200px] truncate" title="${row.task}">${row.task}</td>
+                        <td class="py-4 px-2"><span class="text-xs px-2 py-1 rounded bg-zinc-800 text-zinc-400">${row.agent}</span></td>
+                        <td class="py-4 px-2 text-zinc-500 text-xs">${row.model}</td>
+                        <td class="py-4 px-2 text-zinc-400">${row.input.toLocaleString()}</td>
+                        <td class="py-4 px-2 text-zinc-400">${row.output.toLocaleString()}</td>
+                        <td class="py-4 px-2 text-emerald-400 font-bold">$${row.cost}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            if (totalEl) totalEl.textContent = `$${totalCost.toFixed(4)}`;
         }
 
         // Initialize App
