@@ -152,10 +152,8 @@ function scanDocuments() {
 }
 
 const PRICING = {
-    'gemini-3-flash-preview': { input: 0.1, output: 0.4 },
-    'deepseek-r1-distill-llama-70b': { input: 0.59, output: 0.79 },
-    'claude-3-5-sonnet': { input: 3.0, output: 15.0 },
-    'default': { input: 0.95, output: 4.75 }
+    'aiberm/claude-opus-4-5-20251101-thinking': { input: 0.95, output: 4.75 },
+    'default': { input: 0.5, output: 1.5 }
 };
 
 function getAgentData() {
