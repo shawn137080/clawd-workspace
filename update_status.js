@@ -3,6 +3,11 @@
 /**
  * HEARTBEAT Script Logic (Internal Node Script)
  * Powered by 'aiberm/openai/gpt-5.2-codex' for coding logic.
+ * 
+ * Requirements:
+ * 1. Filter to Running Only: Only include agents if status is 'RUNNING'.
+ * 2. Immediate Cleanup: Completed agents (ageMs > 60000) removed immediately.
+ * 3. Zac Status Persistent: Zac stays in zac_status.json regardless of sub-agents.
  */
 
 const fs = require('fs');
@@ -21,19 +26,18 @@ function getAgentData() {
             .filter(s => s.key.includes(':subagent:'))
             .map(s => {
                 const ageMs = s.ageMs || (now - s.updatedAt);
-                const status = ageMs < 60000 ? 'Running' : 'Completed';
+                // Status is 'RUNNING' only if updated within the last 60 seconds
+                const status = ageMs < 60000 ? 'RUNNING' : 'COMPLETED';
                 
-                // 1. Extract Label from session key
-                // Key format: agent:main:subagent:LABEL-OR-ID
+                // Extract Label from session key
                 const keyParts = s.key.split(':');
                 let label = keyParts[keyParts.length - 1];
                 
-                // Fallback for missing label
                 if (!label || label.match(/^[0-9a-f-]{36}$/)) {
                     label = 'Specialist Agent';
                 }
 
-                // 2. Extract Task from session .jsonl file
+                // Extract Task from session .jsonl file
                 let task = 'Processing...';
                 try {
                     const jsonlPath = path.join(sessionsDir, `${s.sessionId}.jsonl`);
@@ -54,10 +58,10 @@ function getAgentData() {
                         }
                     }
                 } catch (err) {
-                    console.error(`Error reading task for ${s.sessionId}:`, err.message);
+                    // Silently fail task extraction
                 }
 
-                // 3. Determine Type based on label for icons
+                // Determine Type based on label
                 let type = 'default';
                 const lowerLabel = label.toLowerCase();
                 if (lowerLabel.includes('debug') || lowerLabel.includes('fix')) type = 'debugger';
@@ -72,11 +76,12 @@ function getAgentData() {
                     status: status,
                     task: task,
                     type: type,
-                    updatedAt: s.updatedAt
+                    updatedAt: s.updatedAt,
+                    ageMs: ageMs
                 };
             })
-            .sort((a, b) => b.updatedAt - a.updatedAt)
-            .slice(0, 8); // Keep recent 8
+            .filter(agent => agent.status === 'RUNNING') // Filter to Running Only & Immediate Cleanup
+            .sort((a, b) => b.updatedAt - a.updatedAt);
 
         return subAgents;
     } catch (e) {
@@ -86,13 +91,23 @@ function getAgentData() {
 }
 
 function updateZacStatus() {
+    // Zac status is persistent and independent of sub-agents
+    // We update thoughts or keep current ones if they exist
+    let existingZac = { status: 'Thinking', thoughts: [] };
+    if (fs.existsSync('zac_status.json')) {
+        try {
+            existingZac = JSON.parse(fs.readFileSync('zac_status.json', 'utf8'));
+        } catch (e) {}
+    }
+
+    const newThought = { time: new Date().toLocaleTimeString(), text: 'Monitoring sub-agent lifecycle and cleaning up completed sessions.' };
+    
+    // Maintain a rolling log of 10 thoughts
+    const thoughts = [...(existingZac.thoughts || []), newThought].slice(-10);
+
     return {
         status: 'Working',
-        thoughts: [
-            { time: new Date().toLocaleTimeString(), text: 'Optimizing agent monitoring logic...' },
-            { time: new Date().toLocaleTimeString(), text: 'Mapping session metadata to human-readable labels.' },
-            { time: new Date().toLocaleTimeString(), text: 'Synchronizing UI components with live agent tasks.' }
-        ]
+        thoughts: thoughts
     };
 }
 
@@ -102,4 +117,4 @@ fs.writeFileSync('agents_status.json', JSON.stringify(agents, null, 2));
 const zac = updateZacStatus();
 fs.writeFileSync('zac_status.json', JSON.stringify(zac, null, 2));
 
-console.log(`Exported ${agents.length} agents to agents_status.json`);
+console.log(`Exported ${agents.length} active agents to agents_status.json`);

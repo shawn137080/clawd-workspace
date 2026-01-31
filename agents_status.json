@@ -1,66 +1,11 @@
 [
   {
-    "id": "dab8f409-d565-41ee-a338-0eb34f60a2c9",
+    "id": "ad37ff4d-0f9f-4e5f-8e2c-af9d387fed98",
     "label": "Specialist Agent",
-    "status": "Running",
-    "task": "I need you to fix the 'Sub-Agent Activity Monitor' in 'index.html' immediately. The user is frustrat...",
+    "status": "RUNNING",
+    "task": "I need you to update the 'Sub-Agent Activity Monitor' logic in 'update_status.js' and 'index.html'....",
     "type": "default",
-    "updatedAt": 1769882302177
-  },
-  {
-    "id": "48afa636-d180-4fcb-b340-b0a5f04d4772",
-    "label": "Specialist Agent",
-    "status": "Completed",
-    "task": "I need you to fix the 'Sub-Agent Activity Monitor' in 'index.html'....",
-    "type": "default",
-    "updatedAt": 1769882150352
-  },
-  {
-    "id": "c003b86a-c6ed-424a-8d9b-d43c6cf15b92",
-    "label": "Specialist Agent",
-    "status": "Completed",
-    "task": "I need you to fix and upgrade the Kanban dashboard (index.html) immediately....",
-    "type": "default",
-    "updatedAt": 1769881860456
-  },
-  {
-    "id": "ed9d5461-db2d-4775-a1d9-954d2d7d8cea",
-    "label": "Specialist Agent",
-    "status": "Completed",
-    "task": "I need you to perform a final alignment of the Kanban dashboard (index.html) based on the SystemOver...",
-    "type": "default",
-    "updatedAt": 1769881614592
-  },
-  {
-    "id": "c8a3b0f0-c154-401a-83a8-1bd06320bad7",
-    "label": "Specialist Agent",
-    "status": "Completed",
-    "task": "I need a high-level, simple, and direct overview of how the user can monitor the entire system (main...",
-    "type": "default",
-    "updatedAt": 1769881527265
-  },
-  {
-    "id": "a6391867-e5b6-43a5-9249-3d1bd00e27ff",
-    "label": "Specialist Agent",
-    "status": "Completed",
-    "task": "I need you to add a 'Zac Thought Feed' section to the Kanban dashboard (index.html)....",
-    "type": "default",
-    "updatedAt": 1769881379368
-  },
-  {
-    "id": "ea357dba-f9d3-4d14-95f7-feb8c2d885b6",
-    "label": "Specialist Agent",
-    "status": "Completed",
-    "task": "I need you to upgrade the Kanban dashboard (index.html) to include a 'Sub-Agent Activity Monitor'....",
-    "type": "default",
-    "updatedAt": 1769881225855
-  },
-  {
-    "id": "07717117-cae3-4a8a-bc86-c0099bacac0e",
-    "label": "Specialist Agent",
-    "status": "Completed",
-    "task": "I need you to transform 'index.html' into a sophisticated, Jira-style Kanban dashboard....",
-    "type": "default",
-    "updatedAt": 1769881069773
+    "updatedAt": 1769882505681,
+    "ageMs": 34647
   }
 ]
