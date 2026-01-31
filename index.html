@@ -1,63 +1,322 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mission Control Dashboard</title>
+    <title>Zac Kanban | Mission Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 1000px; margin: 0 auto; padding: 20px; background: #f4f4f9; }
-        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
-        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
-        h2 { color: #2980b9; margin-top: 0; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; }
-        .status-high { background: #e74c3c; color: #fff; }
-        .status-medium { background: #f39c12; color: #fff; }
-        .task-list { list-style: none; padding: 0; }
-        .task-list li { padding: 8px 0; border-bottom: 1px solid #eee; display: flex; align-items: center; }
-        .task-list li:last-child { border-bottom: none; }
-        .checkbox { margin-right: 10px; }
-        .timestamp { font-size: 0.8em; color: #7f8c8d; text-align: right; margin-top: 20px; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #09090b; color: #fafafa; }
+        .glass { background: rgba(24, 24, 27, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(39, 39, 42, 1); }
+        .kanban-column { min-height: 70vh; transition: background-color 0.2s; }
+        .kanban-column.drag-over { background-color: rgba(39, 39, 42, 0.5); }
+        .task-card { cursor: grab; transition: transform 0.1s, box-shadow 0.1s; }
+        .task-card:active { cursor: grabbing; }
+        .ghost-card { opacity: 0.4; background: #27272a !important; border: 2px dashed #52525b !important; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
     </style>
 </head>
-<body>
-    <h1>🛰️ Mission Control</h1>
-    
-    <div class="grid">
-        <div class="card">
-            <h2>🛒 Ecommerce Research</h2>
-            <span class="status-badge status-high">High Priority</span>
-            <ul class="task-list">
-                <li>Daily Product Discovery (09:00 AM)</li>
-                <li>TikTok Viral Monitor (02:00 PM)</li>
-                <li>Competitor Watch (Mon/Thu)</li>
-            </ul>
+<body class="p-6 md:p-10">
+    <!-- Header Section -->
+    <header class="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight text-white mb-2 flex items-center gap-3">
+                <i data-lucide="layout-dashboard" class="text-blue-500"></i>
+                Mission Control
+            </h1>
+            <p class="text-zinc-400">Manage projects, tasks, and system status.</p>
         </div>
-        
-        <div class="card">
-            <h2>🏠 Rental/Buy Property</h2>
-            <span class="status-badge status-medium">Medium Priority</span>
-            <ul class="task-list">
-                <li>MLS/51.ca Dual-Mode Scraper</li>
-                <li>Real-time Telegram Alerts</li>
-                <li>Rent vs Buy Analysis</li>
-            </ul>
+
+        <div class="flex items-center gap-4">
+            <!-- Zac Status Indicator -->
+            <div id="zac-status-container" class="glass px-4 py-2 rounded-full flex items-center gap-3">
+                <span class="relative flex h-3 w-3">
+                    <span id="status-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"></span>
+                    <span id="status-dot" class="relative inline-flex rounded-full h-3 w-3"></span>
+                </span>
+                <span class="text-sm font-medium">Zac: <span id="status-text" class="text-zinc-300">Syncing...</span></span>
+            </div>
+            
+            <button onclick="copyData()" class="glass hover:bg-zinc-800 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+                <i data-lucide="copy" class="w-4 h-4"></i> Sync JSON
+            </button>
+        </div>
+    </header>
+
+    <!-- Progress Section -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+        <div class="glass p-5 rounded-xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-semibold flex items-center gap-2 text-zinc-200">
+                    <i data-lucide="shopping-cart" class="w-4 h-4 text-orange-400"></i> Ecommerce Research
+                </h3>
+                <span class="text-xs text-zinc-500">Active</span>
+            </div>
+            <div class="w-full bg-zinc-800 rounded-full h-2 mb-2">
+                <div class="bg-orange-500 h-2 rounded-full" style="width: 65%"></div>
+            </div>
+            <div class="flex justify-between text-[10px] text-zinc-500 uppercase tracking-wider">
+                <span>Phase: Discovery</span>
+                <span>65% Complete</span>
+            </div>
+        </div>
+
+        <div class="glass p-5 rounded-xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-semibold flex items-center gap-2 text-zinc-200">
+                    <i data-lucide="home" class="w-4 h-4 text-blue-400"></i> Rental/Buy Property
+                </h3>
+                <span class="text-xs text-zinc-500">Active</span>
+            </div>
+            <div class="w-full bg-zinc-800 rounded-full h-2 mb-2">
+                <div class="bg-blue-500 h-2 rounded-full" style="width: 40%"></div>
+            </div>
+            <div class="flex justify-between text-[10px] text-zinc-500 uppercase tracking-wider">
+                <span>Phase: Scraper Setup</span>
+                <span>40% Complete</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Kanban Board -->
+    <main class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Todo Column -->
+        <div class="flex flex-col gap-4">
+            <div class="flex items-center justify-between px-2">
+                <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                    Todo <span id="count-todo" class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px]">0</span>
+                </h2>
+                <button onclick="addNewTask('todo')" class="text-zinc-500 hover:text-white transition-colors">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div id="todo" class="kanban-column flex flex-col gap-3 p-2 rounded-lg">
+                <!-- Tasks injected here -->
+            </div>
+        </div>
+
+        <!-- In Progress Column -->
+        <div class="flex flex-col gap-4">
+            <div class="flex items-center justify-between px-2">
+                <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                    In Progress <span id="count-inprogress" class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px]">0</span>
+                </h2>
+            </div>
+            <div id="inprogress" class="kanban-column flex flex-col gap-3 p-2 rounded-lg">
+                <!-- Tasks injected here -->
+            </div>
+        </div>
+
+        <!-- Done Column -->
+        <div class="flex flex-col gap-4">
+            <div class="flex items-center justify-between px-2">
+                <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                    Done <span id="count-done" class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px]">0</span>
+                </h2>
+            </div>
+            <div id="done" class="kanban-column flex flex-col gap-3 p-2 rounded-lg">
+                <!-- Tasks injected here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Task Modal (Hidden) -->
+    <div id="task-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="glass w-full max-w-md p-6 rounded-2xl shadow-2xl">
+            <h3 class="text-xl font-bold mb-4">New Task</h3>
+            <input type="text" id="task-input" placeholder="What needs to be done?" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+            <div class="flex justify-end gap-3">
+                <button onclick="closeModal()" class="px-4 py-2 text-zinc-400 hover:text-white font-medium">Cancel</button>
+                <button onclick="saveTask()" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg font-bold transition-colors">Create</button>
+            </div>
         </div>
     </div>
 
-    <div class="card">
-        <h2>📝 General Tasks</h2>
-        <ul class="task-list">
-            <li>[ ] Setup Task Dashboard HTML (In Progress)</li>
-            <li>[ ] Configure Heartbeat reminders (In Progress)</li>
-            <li>[x] Configure OpenRouter/xAI Keys</li>
-        </ul>
+    <!-- Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 glass px-6 py-3 rounded-xl shadow-xl translate-y-20 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-3 border-l-4 border-l-blue-500">
+        <i data-lucide="check-circle" class="w-5 h-5 text-blue-500"></i>
+        <span id="toast-message">Board updated</span>
     </div>
-
-    <div class="timestamp">Last Updated: <span id="last-updated">--</span></div>
 
     <script>
-        document.getElementById('last-updated').textContent = new Date().toLocaleString();
+        // Data Structure
+        let boardState = {
+            todo: [
+                { id: '1', content: 'Complete RESEARCH_PLAN.md setup', project: 'Ecommerce' },
+                { id: '2', content: 'Review PLAN.md initial steps', project: 'Rental' },
+                { id: '3', content: 'Setup Task Dashboard Canvas', project: 'General' }
+            ],
+            inprogress: [
+                { id: '4', content: 'Configure Heartbeat reminders', project: 'General' }
+            ],
+            done: [
+                { id: '5', content: 'Configure OpenRouter and xAI API Keys', project: 'General' },
+                { id: '6', content: 'Connect Aiberm Provider', project: 'General' }
+            ]
+        };
+
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Initialize Kanban columns
+        const columns = ['todo', 'inprogress', 'done'];
+        columns.forEach(id => {
+            const el = document.getElementById(id);
+            new Sortable(el, {
+                group: 'kanban',
+                animation: 150,
+                ghostClass: 'ghost-card',
+                onEnd: () => {
+                    updateStateFromDOM();
+                    renderCounters();
+                    showToast('Task moved successfully');
+                }
+            });
+        });
+
+        // Render functions
+        function renderBoard() {
+            columns.forEach(col => {
+                const container = document.getElementById(col);
+                container.innerHTML = '';
+                boardState[col].forEach(task => {
+                    container.appendChild(createTaskCard(task));
+                });
+            });
+            renderCounters();
+        }
+
+        function createTaskCard(task) {
+            const div = document.createElement('div');
+            div.className = 'task-card glass p-4 rounded-xl shadow-sm border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/50 transition-all group';
+            div.dataset.id = task.id;
+            div.dataset.project = task.project;
+            
+            const projectColors = {
+                'Ecommerce': 'text-orange-400',
+                'Rental': 'text-blue-400',
+                'General': 'text-zinc-500'
+            };
+
+            div.innerHTML = `
+                <div class="flex flex-col gap-2">
+                    <div class="flex justify-between items-start">
+                        <span class="text-[10px] font-bold uppercase tracking-widest ${projectColors[task.project] || 'text-zinc-500'}">
+                            ${task.project}
+                        </span>
+                        <button class="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-red-400 transition-all" onclick="deleteTask('${task.id}')">
+                            <i data-lucide="trash-2" class="w-3 h-3"></i>
+                        </button>
+                    </div>
+                    <p class="text-sm text-zinc-200 leading-relaxed">${task.content}</p>
+                </div>
+            `;
+            lucide.createIcons();
+            return div;
+        }
+
+        function renderCounters() {
+            columns.forEach(col => {
+                document.getElementById(`count-${col}`).textContent = document.getElementById(col).children.length;
+            });
+        }
+
+        // Logic functions
+        function updateStateFromDOM() {
+            columns.forEach(col => {
+                const el = document.getElementById(col);
+                const taskCards = Array.from(el.children);
+                boardState[col] = taskCards.map(card => ({
+                    id: card.dataset.id,
+                    content: card.querySelector('p').textContent,
+                    project: card.dataset.project
+                }));
+            });
+        }
+
+        let currentAddColumn = 'todo';
+        function addNewTask(col) {
+            currentAddColumn = col;
+            document.getElementById('task-modal').classList.remove('hidden');
+            document.getElementById('task-modal').classList.add('flex');
+            document.getElementById('task-input').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('task-modal').classList.add('hidden');
+            document.getElementById('task-modal').classList.remove('flex');
+            document.getElementById('task-input').value = '';
+        }
+
+        function saveTask() {
+            const content = document.getElementById('task-input').value.trim();
+            if (!content) return;
+
+            const newTask = {
+                id: Date.now().toString(),
+                content: content,
+                project: 'General'
+            };
+
+            boardState[currentAddColumn].push(newTask);
+            renderBoard();
+            closeModal();
+            showToast('Task added');
+        }
+
+        function deleteTask(id) {
+            columns.forEach(col => {
+                boardState[col] = boardState[col].filter(t => t.id !== id);
+            });
+            renderBoard();
+            showToast('Task deleted');
+        }
+
+        // Zac Status Simulation (Link to file logic)
+        function updateZacStatus() {
+            // In a real scenario, this would fetch 'memory/heartbeat-state.json'
+            // For now, we simulate based on activity or local storage
+            const statuses = [
+                { text: 'Thinking', dot: 'bg-amber-500', ping: 'bg-amber-500' },
+                { text: 'Working', dot: 'bg-blue-500', ping: 'bg-blue-500' },
+                { text: 'Idle', dot: 'bg-emerald-500', ping: 'bg-emerald-500' }
+            ];
+            
+            // Random status for prototype visualization
+            const status = statuses[Math.floor(Math.random() * statuses.length)];
+            
+            document.getElementById('status-text').textContent = status.text;
+            document.getElementById('status-dot').className = `relative inline-flex rounded-full h-3 w-3 ${status.dot}`;
+            document.getElementById('status-ping').className = `animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status.ping}`;
+        }
+
+        // Sync Logic
+        function copyData() {
+            const data = JSON.stringify(boardState, null, 2);
+            navigator.clipboard.writeText(data).then(() => {
+                showToast('JSON Copied! Paste to TASKS.md update.');
+            });
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // Start
+        setInterval(updateZacStatus, 5000);
+        updateZacStatus();
+        renderBoard();
     </script>
 </body>
 </html>
