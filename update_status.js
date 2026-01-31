@@ -3,13 +3,102 @@
 /**
  * HEARTBEAT Script Logic (Internal Node Script)
  * Powered by 'aiberm/openai/gpt-5.2-codex' for coding logic.
+ * 
+ * This script synchronizes workspace state for the dashboard.
  */
 
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-// Configuration for Document Scanning
+// --- TASKS.md Parsing Logic ---
+
+/**
+ * Parses TASKS.md into a JSON format used by the dashboard.
+ * Columns: Backlog, Todo, In Progress, Done
+ * 
+ * TASKS.md format:
+ * ## Heading (Backlog/Todo/In Progress/Done/Active Projects/General Tasks)
+ * - [ ] Task content
+ * - [x] Done task
+ */
+function parseTasks() {
+    const tasksPath = path.join(__dirname, 'TASKS.md');
+    if (!fs.existsSync(tasksPath)) return { backlog: [], todo: [], inprogress: [], done: [] };
+
+    const content = fs.readFileSync(tasksPath, 'utf8');
+    const lines = content.split('\n');
+
+    const tasks = {
+        backlog: [],
+        todo: [],
+        inprogress: [],
+        done: []
+    };
+
+    let currentProject = 'General Tasks';
+    let currentCategory = 'todo'; // Default category
+
+    let taskId = 1;
+
+    for (let line of lines) {
+        line = line.trim();
+        if (!line) continue;
+
+        // Heading detection
+        const headingMatch = line.match(/^##\s+(.+)/);
+        if (headingMatch) {
+            const heading = headingMatch[1].toLowerCase();
+            
+            // Map headings to columns
+            if (heading.includes('backlog')) {
+                currentCategory = 'backlog';
+            } else if (heading.includes('in progress')) {
+                currentCategory = 'inprogress';
+            } else if (heading.includes('done') || heading.includes('completed')) {
+                currentCategory = 'done';
+            } else if (heading.includes('todo') || heading.includes('active') || heading.includes('general')) {
+                currentCategory = 'todo';
+            }
+
+            if (heading.includes('general')) {
+                currentProject = 'General Tasks';
+            }
+            continue;
+        }
+
+        // Project detection (bold text in list item)
+        const projectMatch = line.match(/^-\s+\[[ x]\]\s+\*\*(.+)\*\*/);
+        if (projectMatch) {
+            currentProject = projectMatch[1];
+            continue;
+        }
+
+        // Task item detection
+        const taskMatch = line.match(/^-\s+\[([ x])\]\s+(.+)/);
+        if (taskMatch) {
+            const isDone = taskMatch[1] === 'x';
+            let taskContent = taskMatch[2].trim();
+            
+            // Fix: If this is NOT a project header but is inside a project-specific section,
+            // we should detect if it's indented or if we've switched back to General Tasks.
+            // For now, let's reset project if we hit a General section heading.
+            
+            const category = isDone ? 'done' : currentCategory;
+            
+            tasks[category].push({
+                id: String(taskId++),
+                content: taskContent,
+                project: currentProject
+            });
+        }
+    }
+
+    return tasks;
+}
+
+// --- Original update_status.js Logic ---
+
 const DOC_PATHS = [
     { dir: '.', pattern: /README\.md$|SOUL\.md$/i, tag: 'GUIDE', icon: 'book' },
     { dir: 'memory', pattern: /\.md$/i, tag: 'HISTORY', icon: 'brain' },
@@ -33,7 +122,6 @@ function scanDocuments() {
                     const filePath = path.join(config.dir, file);
                     const stats = fs.statSync(filePath);
                     
-                    // Simple title extraction (use filename if no header)
                     let title = file;
                     if (path.extname(file) === '.md') {
                         try {
@@ -63,7 +151,6 @@ function scanDocuments() {
     return docs.sort((a, b) => new Date(b.updated) - new Date(a.updated));
 }
 
-// Price estimates per 1M tokens (very rough approximation for dashboard display)
 const PRICING = {
     'gemini-3-flash-preview': { input: 0.1, output: 0.4 },
     'deepseek-r1-distill-llama-70b': { input: 0.59, output: 0.79 },
@@ -116,7 +203,6 @@ function getAgentData() {
                 }
             } catch (err) {}
 
-            // Usage Stats Collection
             const modelKey = s.model || 'default';
             const pricing = PRICING[modelKey] || PRICING.default;
             const inputTokens = s.inputTokens || 0;
@@ -133,7 +219,6 @@ function getAgentData() {
                 timestamp: s.updatedAt
             });
 
-            // Activity Log (only for reasonably recent or completed tasks)
             if (status === 'COMPLETED' || isSubagent) {
                 activityLog.push({
                     timestamp: new Date(s.updatedAt).toISOString(),
@@ -162,7 +247,6 @@ function getAgentData() {
             };
         });
 
-        // Write Usage and Activity logs
         fs.writeFileSync('usage_stats.json', JSON.stringify(usageStats.sort((a,b) => b.timestamp - a.timestamp), null, 2));
         fs.writeFileSync('activity_log.json', JSON.stringify(activityLog.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)), null, 2));
 
@@ -194,6 +278,10 @@ function updateZacStatus() {
     };
 }
 
+// Execution
+const tasks = parseTasks();
+fs.writeFileSync('tasks.json', JSON.stringify(tasks, null, 2));
+
 const agents = getAgentData();
 fs.writeFileSync('agents_status.json', JSON.stringify(agents, null, 2));
 
@@ -203,4 +291,4 @@ fs.writeFileSync('zac_status.json', JSON.stringify(zac, null, 2));
 const docs = scanDocuments();
 fs.writeFileSync('docs_index.json', JSON.stringify(docs, null, 2));
 
-console.log(`Exported ${agents.length} active agents, ${docs.length} docs, usage_stats.json, and activity_log.json`);
+console.log(`Exported ${agents.length} active agents, ${docs.length} docs, tasks.json, usage_stats.json, and activity_log.json`);
