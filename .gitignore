@@ -1,0 +1,8 @@
+.DS_Store
+.env
+.clawhub
+.clawdhub
+client_secret_google.json
+node_modules
+*.log
+memory/
