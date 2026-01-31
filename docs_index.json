@@ -1,5 +1,38 @@
 [
   {
+    "id": "ZWNvbW1lcmNlL1JFU0VBUkNIX1BMQU4ubWQ=",
+    "title": "Ecommerce Scraper Research Plan",
+    "path": "ecommerce/RESEARCH_PLAN.md",
+    "created": "2026-01-30T20:27:04.756Z",
+    "updated": "2026-01-31T18:19:32.497Z",
+    "size": 525,
+    "category": "ecommerce",
+    "tag": "PLAN",
+    "icon": "map"
+  },
+  {
+    "id": "ZWNvbW1lcmNlL2ZpbmRpbmdzXzIwMjYtMDEtMzEubWQ=",
+    "title": "TikTok Trending Findings - 2026-01-31",
+    "path": "ecommerce/findings_2026-01-31.md",
+    "created": "2026-01-31T18:19:30.807Z",
+    "updated": "2026-01-31T18:19:30.807Z",
+    "size": 247,
+    "category": "ecommerce",
+    "tag": "RESEARCH",
+    "icon": "search"
+  },
+  {
+    "id": "cmVudGFsL1BMQU4ubWQ=",
+    "title": "Toronto Property Scraper Project Plan",
+    "path": "rental/PLAN.md",
+    "created": "2026-01-30T20:33:06.615Z",
+    "updated": "2026-01-31T18:19:24.436Z",
+    "size": 606,
+    "category": "rental",
+    "tag": "PLAN",
+    "icon": "clipboard-list"
+  },
+  {
     "id": "UkVBRE1FLm1k",
     "title": "🦾 Zac — AI Executive Assistant",
     "path": "README.md",
@@ -7,8 +40,19 @@
     "updated": "2026-01-31T17:35:57.307Z",
     "size": 3434,
     "category": "Root",
-    "tag": "Guide",
+    "tag": "GUIDE",
     "icon": "book"
+  },
+  {
+    "id": "VEFTS1MubWQ=",
+    "title": "📋 Task Management Dashboard",
+    "path": "TASKS.md",
+    "created": "2026-01-31T17:28:26.987Z",
+    "updated": "2026-01-31T17:28:26.987Z",
+    "size": 423,
+    "category": "Root",
+    "tag": "PLAN",
+    "icon": "check-square"
   },
   {
     "id": "bWVtb3J5LzIwMjYtMDEtMzAubWQ=",
@@ -18,29 +62,18 @@
     "updated": "2026-01-30T20:50:11.027Z",
     "size": 1721,
     "category": "memory",
-    "tag": "History",
+    "tag": "HISTORY",
     "icon": "brain"
   },
   {
-    "id": "cmVudGFsL1BMQU4ubWQ=",
-    "title": "Toronto Property Hunter Plan (Rent & Buy)",
-    "path": "rental/PLAN.md",
-    "created": "2026-01-30T20:33:06.615Z",
-    "updated": "2026-01-30T20:33:34.869Z",
-    "size": 1125,
-    "category": "rental",
-    "tag": "Property",
-    "icon": "home"
-  },
-  {
-    "id": "ZWNvbW1lcmNlL1JFU0VBUkNIX1BMQU4ubWQ=",
-    "title": "Dropshipping Research Schedule",
-    "path": "ecommerce/RESEARCH_PLAN.md",
-    "created": "2026-01-30T20:27:04.756Z",
-    "updated": "2026-01-30T20:27:04.756Z",
-    "size": 723,
-    "category": "ecommerce",
-    "tag": "Research",
-    "icon": "shopping-bag"
+    "id": "U09VTC5tZA==",
+    "title": "SOUL.md - Who You Are",
+    "path": "SOUL.md",
+    "created": "2026-01-29T21:58:54.481Z",
+    "updated": "2026-01-29T21:58:54.481Z",
+    "size": 1673,
+    "category": "Root",
+    "tag": "GUIDE",
+    "icon": "book"
   }
 ]

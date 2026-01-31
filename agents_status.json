@@ -5,16 +5,16 @@
     "status": "RUNNING",
     "task": "ok",
     "type": "default",
-    "updatedAt": 1769883229009,
-    "ageMs": 7172
+    "updatedAt": 1769883703024,
+    "ageMs": 24589
   },
   {
-    "id": "a8662631-0258-44b9-8f02-a91348cb1ca4",
+    "id": "88a6e8da-d1f1-43f1-85c5-f1c531d6f3a5",
     "label": "Specialist Agent",
     "status": "RUNNING",
-    "task": "I need you to upgrade the Mission Control dashboard (index.html) to include a 'Docs' tab inspired by...",
+    "task": "I need you to restructure the document categorization logic for the Mission Control dashboard....",
     "type": "default",
-    "updatedAt": 1769883223427,
-    "ageMs": 12754
+    "updatedAt": 1769883698739,
+    "ageMs": 28874
   }
 ]

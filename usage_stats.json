@@ -3,19 +3,55 @@
     "task": "ok",
     "agent": "Zac (Main)",
     "model": "gemini-3-flash-preview",
-    "input": 73796,
-    "output": 333,
-    "cost": "0.0075",
-    "timestamp": 1769883229009
+    "input": 82189,
+    "output": 337,
+    "cost": "0.0084",
+    "timestamp": 1769883703024
+  },
+  {
+    "task": "I need you to restructure the document categorization logic for the Mission Control dashboard....",
+    "agent": "Sub-Agent (d2cea59a)",
+    "model": "gemini-3-flash-preview",
+    "input": 0,
+    "output": 0,
+    "cost": "0.0000",
+    "timestamp": 1769883698739
+  },
+  {
+    "task": "I need you to develop the first stage of the Ecommerce Scraper....",
+    "agent": "Sub-Agent (500a51fa)",
+    "model": "gemini-3-flash-preview",
+    "input": 11747,
+    "output": 274,
+    "cost": "0.0013",
+    "timestamp": 1769883577827
+  },
+  {
+    "task": "I need you to develop the first stage of the Toronto Property Scraper....",
+    "agent": "Sub-Agent (96b3b585)",
+    "model": "gemini-3-flash-preview",
+    "input": 9148,
+    "output": 310,
+    "cost": "0.0010",
+    "timestamp": 1769883567562
+  },
+  {
+    "task": "I need you to perform a detailed UI refinement of the 'Docs' tab in 'index.html' to match the user's...",
+    "agent": "Sub-Agent (0a09bb8d)",
+    "model": "gemini-3-flash-preview",
+    "input": 41081,
+    "output": 523,
+    "cost": "0.0043",
+    "timestamp": 1769883391269
   },
   {
     "task": "I need you to upgrade the Mission Control dashboard (index.html) to include a 'Docs' tab inspired by...",
     "agent": "Sub-Agent (d850152d)",
     "model": "gemini-3-flash-preview",
-    "input": 0,
-    "output": 0,
-    "cost": "0.0000",
-    "timestamp": 1769883223427
+    "input": 24642,
+    "output": 351,
+    "cost": "0.0026",
+    "timestamp": 1769883271894
   },
   {
     "task": "I need you to upgrade the Mission Control dashboard (index.html) to include two new tabs: 'Activity ...",

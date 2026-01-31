@@ -11,11 +11,13 @@ const { execSync } = require('child_process');
 
 // Configuration for Document Scanning
 const DOC_PATHS = [
-    { dir: '.', pattern: /README\.md$/i, tag: 'Guide', icon: 'book' },
-    { dir: 'ecommerce', pattern: /\.md$/i, tag: 'Research', icon: 'shopping-bag' },
-    { dir: 'rental', pattern: /\.md$/i, tag: 'Property', icon: 'home' },
-    { dir: 'memory', pattern: /\.md$/i, tag: 'History', icon: 'brain' },
-    { dir: 'docs', pattern: /\.(md|txt)$/i, tag: 'Doc', icon: 'file-text' }
+    { dir: '.', pattern: /README\.md$|SOUL\.md$/i, tag: 'GUIDE', icon: 'book' },
+    { dir: 'memory', pattern: /\.md$/i, tag: 'HISTORY', icon: 'brain' },
+    { dir: 'ecommerce', pattern: /findings_.*\.md$/i, tag: 'RESEARCH', icon: 'search' },
+    { dir: 'rental', pattern: /raw_.*\.json$/i, tag: 'RESEARCH', icon: 'database' },
+    { dir: 'ecommerce', pattern: /RESEARCH_PLAN\.md$/i, tag: 'PLAN', icon: 'map' },
+    { dir: 'rental', pattern: /PLAN\.md$/i, tag: 'PLAN', icon: 'clipboard-list' },
+    { dir: '.', pattern: /TASKS\.md$/i, tag: 'PLAN', icon: 'check-square' }
 ];
 
 function scanDocuments() {
@@ -41,16 +43,6 @@ function scanDocuments() {
                         } catch (e) {}
                     }
 
-                    let icon = config.icon;
-                    let tag = config.tag;
-
-                    // Specialized overrides
-                    const lowerFile = file.toLowerCase();
-                    if (lowerFile.includes('security')) { icon = 'shield-alert'; tag = 'Security'; }
-                    else if (lowerFile.includes('automation')) { icon = 'zap'; tag = 'Automation'; }
-                    else if (lowerFile.includes('pulse')) { icon = 'sun'; tag = 'AI Pulse'; }
-                    else if (lowerFile.includes('overnight')) { icon = 'moon'; tag = 'Overnight'; }
-
                     docs.push({
                         id: Buffer.from(filePath).toString('base64'),
                         title: title,
@@ -59,8 +51,8 @@ function scanDocuments() {
                         updated: stats.mtime.toISOString(),
                         size: stats.size,
                         category: config.dir === '.' ? 'Root' : config.dir,
-                        tag: tag,
-                        icon: icon
+                        tag: config.tag,
+                        icon: config.icon
                     });
                 }
             });

@@ -1,9 +1,33 @@
 [
   {
-    "timestamp": "2026-01-31T18:13:43.427Z",
+    "timestamp": "2026-01-31T18:21:38.739Z",
+    "agent": "Sub-Agent (d2cea59a)",
+    "action": "I need you to restructure the document categorization logic for the Mission Control dashboard....",
+    "status": "RUNNING"
+  },
+  {
+    "timestamp": "2026-01-31T18:19:37.827Z",
+    "agent": "Sub-Agent (500a51fa)",
+    "action": "I need you to develop the first stage of the Ecommerce Scraper....",
+    "status": "COMPLETED"
+  },
+  {
+    "timestamp": "2026-01-31T18:19:27.562Z",
+    "agent": "Sub-Agent (96b3b585)",
+    "action": "I need you to develop the first stage of the Toronto Property Scraper....",
+    "status": "COMPLETED"
+  },
+  {
+    "timestamp": "2026-01-31T18:16:31.269Z",
+    "agent": "Sub-Agent (0a09bb8d)",
+    "action": "I need you to perform a detailed UI refinement of the 'Docs' tab in 'index.html' to match the user's...",
+    "status": "COMPLETED"
+  },
+  {
+    "timestamp": "2026-01-31T18:14:31.894Z",
     "agent": "Sub-Agent (d850152d)",
     "action": "I need you to upgrade the Mission Control dashboard (index.html) to include a 'Docs' tab inspired by...",
-    "status": "RUNNING"
+    "status": "COMPLETED"
   },
   {
     "timestamp": "2026-01-31T18:09:48.453Z",

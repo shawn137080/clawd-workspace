@@ -95,8 +95,8 @@
             <nav class="flex gap-2 mb-8 bg-zinc-900/50 p-1 rounded-xl w-fit border border-zinc-800">
                 <button onclick="switchTab('kanban')" id="tab-kanban" class="px-6 py-2 rounded-lg text-sm font-bold transition-all bg-blue-600 text-white shadow-lg">Kanban</button>
                 <button onclick="switchTab('docs')" id="tab-docs" class="px-6 py-2 rounded-lg text-sm font-bold transition-all text-zinc-400 hover:text-white">Docs</button>
-                <button onclick="switchTab('activity')" id="tab-activity" class="px-6 py-2 rounded-lg text-sm font-bold transition-all text-zinc-400 hover:text-white">Activity Log</button>
-                <button onclick="switchTab('usage')" id="tab-usage" class="px-6 py-2 rounded-lg text-sm font-bold transition-all text-zinc-400 hover:text-white">Usage Stats</button>
+                <button onclick="switchTab('activity')" id="tab-activity" class="px-6 py-2 rounded-lg text-sm font-bold transition-all text-zinc-400 hover:text-white">Activity</button>
+                <button onclick="switchTab('usage')" id="tab-usage" class="px-6 py-2 rounded-lg text-sm font-bold transition-all text-zinc-400 hover:text-white">Tokens</button>
             </nav>
 
             <div id="view-kanban" class="tab-view">
@@ -702,6 +702,13 @@
             renderDocsList(filtered);
         }
 
+        const tagColors = {
+            'GUIDE': 'bg-blue-500/10 text-blue-400',
+            'HISTORY': 'bg-emerald-500/10 text-emerald-400',
+            'RESEARCH': 'bg-purple-500/10 text-purple-400',
+            'PLAN': 'bg-orange-500/10 text-orange-400'
+        };
+
         function renderDocsList(docs) {
             const container = document.getElementById('docs-list');
             if (!container) return;
@@ -715,6 +722,7 @@
                 const isActive = currentDocId === doc.id;
                 const updatedDate = new Date(doc.updated);
                 const dateStr = updatedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const colorClass = tagColors[doc.tag] || 'bg-zinc-800 text-zinc-500';
                 
                 return `
                 <button onclick="loadDocument('${doc.id}')" 
@@ -728,7 +736,7 @@
                             <span class="text-[9px] ${isActive ? 'text-blue-100' : 'text-zinc-500'} font-medium shrink-0 ml-2">${dateStr}</span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <span class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter ${isActive ? 'bg-white/20 text-white' : 'bg-zinc-800 text-zinc-500 group-hover:bg-zinc-700'}">${doc.tag}</span>
+                            <span class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter ${isActive ? 'bg-white/20 text-white' : colorClass + ' group-hover:brightness-125'}">${doc.tag}</span>
                             <span class="text-[9px] ${isActive ? 'text-blue-200' : 'text-zinc-600'} truncate">${doc.category}</span>
                         </div>
                     </div>
@@ -755,7 +763,7 @@
             titleEl.textContent = doc.title;
             pathEl.textContent = `${doc.path} • ${(doc.size/1024).toFixed(1)} KB`;
             tagEl.textContent = doc.tag;
-            tagEl.classList.remove('hidden');
+            tagEl.className = `text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter ${tagColors[doc.tag] || 'bg-blue-500/10 text-blue-400'}`;
             mainIcon.setAttribute('data-lucide', doc.icon || 'file-text');
             lucide.createIcons();
 
