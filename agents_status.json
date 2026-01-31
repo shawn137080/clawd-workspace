@@ -1,11 +1,20 @@
 [
   {
-    "id": "ad37ff4d-0f9f-4e5f-8e2c-af9d387fed98",
+    "id": "990ff366-0358-417e-9670-c15868104cf3",
+    "label": "main",
+    "status": "RUNNING",
+    "task": "ok",
+    "type": "default",
+    "updatedAt": 1769883229009,
+    "ageMs": 7172
+  },
+  {
+    "id": "a8662631-0258-44b9-8f02-a91348cb1ca4",
     "label": "Specialist Agent",
     "status": "RUNNING",
-    "task": "I need you to update the 'Sub-Agent Activity Monitor' logic in 'update_status.js' and 'index.html'....",
+    "task": "I need you to upgrade the Mission Control dashboard (index.html) to include a 'Docs' tab inspired by...",
     "type": "default",
-    "updatedAt": 1769882505681,
-    "ageMs": 34647
+    "updatedAt": 1769883223427,
+    "ageMs": 12754
   }
 ]

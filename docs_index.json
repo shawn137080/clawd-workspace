@@ -1,0 +1,38 @@
+[
+  {
+    "id": "UkVBRE1FLm1k",
+    "title": "🦾 Zac — AI Executive Assistant",
+    "path": "README.md",
+    "created": "2026-01-31T17:33:08.255Z",
+    "updated": "2026-01-31T17:35:57.307Z",
+    "size": 3434,
+    "category": "Root"
+  },
+  {
+    "id": "bWVtb3J5LzIwMjYtMDEtMzAubWQ=",
+    "title": "Memory Log - 2026-01-30",
+    "path": "memory/2026-01-30.md",
+    "created": "2026-01-30T20:50:11.027Z",
+    "updated": "2026-01-30T20:50:11.027Z",
+    "size": 1721,
+    "category": "memory"
+  },
+  {
+    "id": "cmVudGFsL1BMQU4ubWQ=",
+    "title": "Toronto Property Hunter Plan (Rent & Buy)",
+    "path": "rental/PLAN.md",
+    "created": "2026-01-30T20:33:06.615Z",
+    "updated": "2026-01-30T20:33:34.869Z",
+    "size": 1125,
+    "category": "rental"
+  },
+  {
+    "id": "ZWNvbW1lcmNlL1JFU0VBUkNIX1BMQU4ubWQ=",
+    "title": "Dropshipping Research Schedule",
+    "path": "ecommerce/RESEARCH_PLAN.md",
+    "created": "2026-01-30T20:27:04.756Z",
+    "updated": "2026-01-30T20:27:04.756Z",
+    "size": 723,
+    "category": "ecommerce"
+  }
+]

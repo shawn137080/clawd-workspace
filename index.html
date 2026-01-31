@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #09090b; color: #fafafa; }
@@ -31,6 +32,20 @@
             border-radius: 50%; background-color: currentColor;
             animation: pulse-ring 1.25s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
         }
+
+        /* Markdown Preview Styles */
+        .prose { color: #d4d4d8; max-width: none; }
+        .prose h1 { color: #ffffff; font-weight: 700; font-size: 1.875rem; margin-top: 1.5rem; margin-bottom: 1rem; }
+        .prose h2 { color: #ffffff; font-weight: 600; font-size: 1.5rem; margin-top: 1.25rem; margin-bottom: 0.75rem; border-bottom: 1px solid #27272a; padding-bottom: 0.5rem; }
+        .prose h3 { color: #f4f4f5; font-weight: 600; font-size: 1.25rem; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .prose p { margin-bottom: 1rem; line-height: 1.625; }
+        .prose ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
+        .prose li { margin-bottom: 0.25rem; }
+        .prose code { background-color: #18181b; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.875em; }
+        .prose pre { background-color: #18181b; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 1rem; border: 1px solid #27272a; }
+        .prose pre code { background-color: transparent; padding: 0; }
+        .prose a { color: #3b82f6; text-decoration: underline; }
+        .prose blockquote { border-left: 4px solid #3f3f46; padding-left: 1rem; font-style: italic; color: #a1a1aa; }
     </style>
 </head>
 <body class="p-6 md:p-10">
@@ -65,6 +80,7 @@
             <!-- Tab Navigation -->
             <nav class="flex gap-2 mb-8 bg-zinc-900/50 p-1 rounded-xl w-fit border border-zinc-800">
                 <button onclick="switchTab('kanban')" id="tab-kanban" class="px-6 py-2 rounded-lg text-sm font-bold transition-all bg-blue-600 text-white shadow-lg">Kanban</button>
+                <button onclick="switchTab('docs')" id="tab-docs" class="px-6 py-2 rounded-lg text-sm font-bold transition-all text-zinc-400 hover:text-white">Docs</button>
                 <button onclick="switchTab('activity')" id="tab-activity" class="px-6 py-2 rounded-lg text-sm font-bold transition-all text-zinc-400 hover:text-white">Activity Log</button>
                 <button onclick="switchTab('usage')" id="tab-usage" class="px-6 py-2 rounded-lg text-sm font-bold transition-all text-zinc-400 hover:text-white">Usage Stats</button>
             </nav>
@@ -187,6 +203,48 @@
                 </div>
             </section>
             </div><!-- End view-kanban -->
+
+            <div id="view-docs" class="tab-view hidden">
+                <div class="flex flex-col md:flex-row gap-6 h-[700px]">
+                    <!-- Docs Sidebar -->
+                    <aside class="w-full md:w-72 flex flex-col gap-4">
+                        <div class="glass rounded-2xl flex flex-col h-full overflow-hidden">
+                            <div class="bg-zinc-900/50 px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
+                                <span class="text-xs font-bold uppercase tracking-wider text-zinc-400">Library</span>
+                                <i data-lucide="book-open" class="w-4 h-4 text-zinc-500"></i>
+                            </div>
+                            <div id="docs-list" class="flex-1 overflow-y-auto p-2 space-y-1">
+                                <!-- Docs items injected here -->
+                                <div class="animate-pulse space-y-2 p-2">
+                                    <div class="h-8 bg-zinc-800/50 rounded"></div>
+                                    <div class="h-8 bg-zinc-800/50 rounded"></div>
+                                    <div class="h-8 bg-zinc-800/50 rounded"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+                    <!-- Docs Preview -->
+                    <main class="flex-1">
+                        <div class="glass rounded-2xl h-full flex flex-col overflow-hidden">
+                            <div id="doc-header" class="bg-zinc-900/50 px-6 py-3 border-b border-zinc-800 flex items-center justify-between">
+                                <div class="flex flex-col">
+                                    <h2 id="doc-title" class="text-sm font-bold text-white">Select a document</h2>
+                                    <span id="doc-meta" class="text-[10px] text-zinc-500 uppercase tracking-tighter">No file selected</span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button id="btn-raw" class="hidden text-zinc-500 hover:text-white"><i data-lucide="code" class="w-4 h-4"></i></button>
+                                </div>
+                            </div>
+                            <div id="doc-content" class="flex-1 overflow-y-auto p-8 prose prose-invert">
+                                <div class="flex flex-col items-center justify-center h-full text-zinc-600">
+                                    <i data-lucide="file-text" class="w-12 h-12 mb-4 opacity-20"></i>
+                                    <p class="text-sm">Choose a file from the sidebar to preview its content.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
 
             <div id="view-activity" class="tab-view hidden">
                 <section class="glass rounded-2xl overflow-hidden min-h-[600px]">
@@ -575,17 +633,74 @@
             document.getElementById(`view-${tab}`).classList.remove('hidden');
             
             // Update Buttons
-            ['kanban', 'activity', 'usage'].forEach(t => {
+            ['kanban', 'docs', 'activity', 'usage'].forEach(t => {
                 const btn = document.getElementById(`tab-${t}`);
-                if (t === tab) {
-                    btn.className = "px-6 py-2 rounded-lg text-sm font-bold transition-all bg-blue-600 text-white shadow-lg";
-                } else {
-                    btn.className = "px-6 py-2 rounded-lg text-sm font-bold transition-all text-zinc-400 hover:text-white";
+                if (btn) {
+                    if (t === tab) {
+                        btn.className = "px-6 py-2 rounded-lg text-sm font-bold transition-all bg-blue-600 text-white shadow-lg";
+                    } else {
+                        btn.className = "px-6 py-2 rounded-lg text-sm font-bold transition-all text-zinc-400 hover:text-white";
+                    }
                 }
             });
 
+            if (tab === 'docs') fetchDocsIndex();
             if (tab === 'activity') fetchActivityLog();
             if (tab === 'usage') fetchUsageStats();
+        }
+
+        let docsData = [];
+
+        async function fetchDocsIndex() {
+            try {
+                const res = await fetch(`docs_index.json?t=${Date.now()}`);
+                if (res.ok) {
+                    docsData = await res.json();
+                    renderDocsList(docsData);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function renderDocsList(docs) {
+            const container = document.getElementById('docs-list');
+            if (!container) return;
+            
+            if (docs.length === 0) {
+                container.innerHTML = '<p class="text-zinc-500 text-xs p-4 italic">No documents found.</p>';
+                return;
+            }
+
+            container.innerHTML = docs.map(doc => `
+                <button onclick="loadDocument('${doc.id}')" class="w-full text-left p-3 rounded-xl hover:bg-zinc-800/50 transition-all group border border-transparent hover:border-zinc-700/50 flex flex-col gap-1">
+                    <span class="text-xs font-semibold text-zinc-300 group-hover:text-white truncate">${doc.title}</span>
+                    <div class="flex items-center justify-between">
+                        <span class="text-[9px] text-zinc-500 uppercase tracking-widest">${doc.category}</span>
+                        <span class="text-[9px] text-zinc-600">${new Date(doc.updated).toLocaleDateString()}</span>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        async function loadDocument(id) {
+            const doc = docsData.find(d => d.id === id);
+            if (!doc) return;
+
+            // UI Feedback
+            document.getElementById('doc-title').textContent = doc.title;
+            document.getElementById('doc-meta').textContent = `${doc.path} • ${(doc.size/1024).toFixed(1)} KB`;
+            document.getElementById('doc-content').innerHTML = '<div class="flex justify-center py-20"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>';
+
+            try {
+                const res = await fetch(`${doc.path}?t=${Date.now()}`);
+                if (res.ok) {
+                    const content = await res.text();
+                    document.getElementById('doc-content').innerHTML = marked.parse(content);
+                } else {
+                    document.getElementById('doc-content').innerHTML = `<p class="text-red-400">Failed to load content for ${doc.path}</p>`;
+                }
+            } catch (e) {
+                document.getElementById('doc-content').innerHTML = `<p class="text-red-400">Error: ${e.message}</p>`;
+            }
         }
 
         async function fetchActivityLog() {

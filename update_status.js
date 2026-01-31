@@ -9,6 +9,56 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
+// Configuration for Document Scanning
+const DOC_PATHS = [
+    { dir: '.', pattern: /README\.md$/i },
+    { dir: 'ecommerce', pattern: /\.md$/i },
+    { dir: 'rental', pattern: /\.md$/i },
+    { dir: 'memory', pattern: /\.md$/i },
+    { dir: 'docs', pattern: /\.(md|txt)$/i }
+];
+
+function scanDocuments() {
+    const docs = [];
+    DOC_PATHS.forEach(config => {
+        const fullPath = path.resolve(config.dir);
+        if (!fs.existsSync(fullPath)) return;
+
+        try {
+            const files = fs.readdirSync(fullPath);
+            files.forEach(file => {
+                if (config.pattern.test(file)) {
+                    const filePath = path.join(config.dir, file);
+                    const stats = fs.statSync(filePath);
+                    
+                    // Simple title extraction (use filename if no header)
+                    let title = file;
+                    if (path.extname(file) === '.md') {
+                        try {
+                            const content = fs.readFileSync(filePath, 'utf8');
+                            const match = content.match(/^#\s+(.+)/m);
+                            if (match) title = match[1];
+                        } catch (e) {}
+                    }
+
+                    docs.push({
+                        id: Buffer.from(filePath).toString('base64'),
+                        title: title,
+                        path: filePath,
+                        created: stats.birthtime.toISOString(),
+                        updated: stats.mtime.toISOString(),
+                        size: stats.size,
+                        category: config.dir === '.' ? 'Root' : config.dir
+                    });
+                }
+            });
+        } catch (e) {
+            console.error(`Error scanning ${config.dir}:`, e);
+        }
+    });
+    return docs.sort((a, b) => new Date(b.updated) - new Date(a.updated));
+}
+
 // Price estimates per 1M tokens (very rough approximation for dashboard display)
 const PRICING = {
     'gemini-3-flash-preview': { input: 0.1, output: 0.4 },
@@ -146,4 +196,7 @@ fs.writeFileSync('agents_status.json', JSON.stringify(agents, null, 2));
 const zac = updateZacStatus();
 fs.writeFileSync('zac_status.json', JSON.stringify(zac, null, 2));
 
-console.log(`Exported ${agents.length} active agents, usage_stats.json, and activity_log.json`);
+const docs = scanDocuments();
+fs.writeFileSync('docs_index.json', JSON.stringify(docs, null, 2));
+
+console.log(`Exported ${agents.length} active agents, ${docs.length} docs, usage_stats.json, and activity_log.json`);
