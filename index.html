@@ -777,8 +777,8 @@
             const doc = docsData.find(d => d.id === id);
             if (!doc) return;
 
-            // Update List Selection
-            renderDocsList(docsData);
+            // Update List Selection (re-filters to preserve UI state)
+            filterDocs();
 
             // UI Feedback
             const titleEl = document.getElementById('doc-title');
