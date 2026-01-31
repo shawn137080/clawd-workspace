@@ -10,7 +10,7 @@
 - [ ] Explore potential AI frameworks for sub-agent scaling
 - [ ] Setup Task Dashboard Canvas
 - [ ] Configure Heartbeat reminders
-- [ ] tell me a joke
+- [ ] tell me a job when you see this
 
 ## ✅ Completed
 - [x] Configure OpenRouter and xAI API Keys
