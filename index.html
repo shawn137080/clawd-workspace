@@ -319,26 +319,235 @@
         // Use 'aiberm/openai/gpt-5.2-codex' coding logic for state and rendering
         let boardState = { backlog: [], todo: [], inprogress: [], done: [] };
         let currentAddCol = 'todo';
+        let docsData = [];
+        let activityData = [];
+        let usageData = [];
+        let currentDocFilter = 'ALL';
         const columns = ['backlog', 'todo', 'inprogress', 'done'];
+
+        /**
+         * Robust data fetching utility with cache busting and error handling
+         */
+        async function fetchData(fileName) {
+            try {
+                const response = await fetch(`${fileName}?t=${Date.now()}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error(`Error fetching ${fileName}:`, error);
+                return null;
+            }
+        }
 
         async function init() {
             try {
-                // Load local tasks.json
-                const res = await fetch('tasks.json');
-                if (res.ok) {
-                    boardState = await res.json();
+                // Load all data files
+                const [tasks, docs, activity, usage] = await Promise.all([
+                    fetchData('tasks.json'),
+                    fetchData('docs_index.json'),
+                    fetchData('activity_log.json'),
+                    fetchData('usage_stats.json')
+                ]);
+
+                if (tasks) {
+                    boardState = tasks;
+                }
+                
+                if (docs) {
+                    docsData = docs;
+                    renderDocs();
+                }
+
+                if (activity) {
+                    activityData = activity;
+                    renderActivity();
+                }
+
+                if (usage) {
+                    usageData = usage;
+                    renderUsage();
                 }
                 
                 initSortable();
                 renderBoard();
                 
-                setInterval(fetchAgentStatus, 5000);
-                fetchAgentStatus();
+                // Polling for statuses and feed
+                setInterval(refreshDynamicData, 5000);
+                refreshDynamicData();
+                
                 lucide.createIcons();
             } catch (err) {
-                console.error('Failed to load tasks.json:', err);
-                showToast('Failed to load tasks.json');
+                console.error('Initialization error:', err);
+                showToast('Failed to initialize dashboard');
             }
+        }
+
+        async function refreshDynamicData() {
+            try {
+                const [agents, zac, activity, usage] = await Promise.all([
+                    fetchData('agents_status.json'),
+                    fetchData('zac_status.json'),
+                    fetchData('activity_log.json'),
+                    fetchData('usage_stats.json')
+                ]);
+
+                if (agents) renderAgents(agents);
+                if (zac) updateZacState(zac);
+                if (activity) {
+                    activityData = activity;
+                    if (!document.getElementById('view-activity').classList.contains('hidden')) {
+                        renderActivity();
+                    }
+                }
+                if (usage) {
+                    usageData = usage;
+                    if (!document.getElementById('view-usage').classList.contains('hidden')) {
+                        renderUsage();
+                    }
+                }
+            } catch (err) {
+                console.error('Refresh error:', err);
+            }
+        }
+
+        // --- Rendering Functions ---
+
+        function renderDocs() {
+            const listContainer = document.getElementById('docs-list');
+            if (!listContainer) return;
+
+            const searchTerm = document.getElementById('docs-search').value.toLowerCase();
+            const filtered = docsData.filter(doc => {
+                const matchesSearch = doc.title.toLowerCase().includes(searchTerm) || doc.path.toLowerCase().includes(searchTerm);
+                const matchesFilter = currentDocFilter === 'ALL' || doc.tag === currentDocFilter;
+                return matchesSearch && matchesFilter;
+            });
+
+            listContainer.innerHTML = filtered.map(doc => `
+                <button onclick="loadDoc('${doc.path}', '${doc.id}')" id="doc-item-${doc.id}" class="doc-item w-full text-left p-3 rounded-xl border border-transparent hover:bg-zinc-800/50 transition-all group flex items-start gap-3">
+                    <div class="p-2 rounded-lg bg-zinc-900 text-zinc-500 group-hover:text-blue-400 transition-colors">
+                        <i data-lucide="${doc.icon || 'file-text'}" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-xs font-bold text-zinc-300 truncate">${doc.title}</h4>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="text-[9px] px-1 py-0.5 rounded bg-zinc-800 text-zinc-500 font-bold uppercase tracking-tighter">${doc.tag}</span>
+                            <span class="text-[9px] text-zinc-600 truncate">${doc.path}</span>
+                        </div>
+                    </div>
+                </button>
+            `).join('');
+
+            // Highlight active filter button
+            document.querySelectorAll('.doc-filter-btn').forEach(btn => {
+                const filter = btn.dataset.filter;
+                if (filter === currentDocFilter) {
+                    btn.classList.add('bg-blue-600', 'text-white', 'border-blue-500');
+                    btn.classList.remove('bg-zinc-800', 'text-zinc-400', 'border-zinc-700/50');
+                } else {
+                    btn.classList.remove('bg-blue-600', 'text-white', 'border-blue-500');
+                    btn.classList.add('bg-zinc-800', 'text-zinc-400', 'border-zinc-700/50');
+                }
+            });
+
+            lucide.createIcons();
+        }
+
+        async function loadDoc(path, id) {
+            try {
+                // UI feedback
+                document.querySelectorAll('.doc-item').forEach(item => item.classList.remove('active'));
+                const activeItem = document.getElementById(`doc-item-${id}`);
+                if (activeItem) activeItem.classList.add('active');
+
+                const contentContainer = document.getElementById('doc-content');
+                contentContainer.innerHTML = '<div class="flex items-center justify-center h-full"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>';
+
+                const doc = docsData.find(d => d.id === id);
+                if (doc) {
+                    document.getElementById('doc-title').textContent = doc.title;
+                    document.getElementById('doc-meta-path').textContent = doc.path;
+                    document.getElementById('doc-meta-tag').textContent = doc.tag;
+                    document.getElementById('doc-meta-tag').classList.remove('hidden');
+                    document.getElementById('doc-main-icon').setAttribute('data-lucide', doc.icon || 'file-text');
+                    lucide.createIcons();
+                }
+
+                const response = await fetch(path + '?t=' + Date.now());
+                if (!response.ok) throw new Error('Failed to load document content');
+                const text = await response.text();
+                
+                contentContainer.innerHTML = marked.parse(text);
+                
+                // Highlight code blocks
+                contentContainer.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+            } catch (err) {
+                console.error('Error loading doc:', err);
+                document.getElementById('doc-content').innerHTML = `<div class="text-red-500 p-4">Error loading document: ${err.message}</div>`;
+            }
+        }
+
+        function filterDocs() {
+            renderDocs();
+        }
+
+        function setDocFilter(filter) {
+            currentDocFilter = filter;
+            renderDocs();
+        }
+
+        function renderActivity() {
+            const container = document.getElementById('activity-list');
+            if (!container) return;
+
+            if (activityData.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-zinc-500">No activity recorded yet.</div>';
+                return;
+            }
+
+            container.innerHTML = activityData.slice().reverse().map(item => `
+                <div class="glass p-4 rounded-xl border-l-4 ${item.status === 'RUNNING' ? 'border-l-blue-500' : 'border-l-emerald-500'} flex gap-4">
+                    <div class="p-2 rounded-lg bg-zinc-800 h-fit">
+                        <i data-lucide="${item.status === 'RUNNING' ? 'loader' : 'check'}" class="w-4 h-4 ${item.status === 'RUNNING' ? 'animate-spin text-blue-400' : 'text-emerald-400'}"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="text-xs font-bold text-zinc-300 uppercase tracking-widest">${item.agent}</span>
+                            <span class="text-[10px] text-zinc-500 font-mono">${new Date(item.timestamp).toLocaleString()}</span>
+                        </div>
+                        <p class="text-sm text-zinc-400">${item.action}</p>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function renderUsage() {
+            const tbody = document.getElementById('usage-table-body');
+            const totalCostEl = document.getElementById('total-cost');
+            if (!tbody) return;
+
+            let total = 0;
+            tbody.innerHTML = usageData.slice().reverse().map(item => {
+                const cost = parseFloat(item.cost) || 0;
+                total += cost;
+                return `
+                    <tr class="hover:bg-zinc-800/30 transition-colors">
+                        <td class="py-4 px-2 text-zinc-300 max-w-[200px] truncate" title="${item.task}">${item.task}</td>
+                        <td class="py-4 px-2 text-zinc-400 text-xs">${item.agent}</td>
+                        <td class="py-4 px-2">
+                            <span class="px-2 py-0.5 rounded bg-zinc-800 text-zinc-500 text-[10px] uppercase font-bold">${item.model}</span>
+                        </td>
+                        <td class="py-4 px-2 text-emerald-400 font-bold">$${cost.toFixed(4)}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            totalCostEl.textContent = `$${total.toFixed(4)}`;
         }
 
         function initSortable() {
@@ -418,7 +627,8 @@
                 const container = document.getElementById(col);
                 if (!container) return;
                 container.innerHTML = '';
-                boardState[col].forEach(task => {
+                const tasks = boardState[col] || [];
+                tasks.forEach(task => {
                     const card = document.createElement('div');
                     card.className = 'task-card glass p-4 rounded-xl border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/50 transition-all group';
                     card.dataset.id = task.id;
@@ -449,7 +659,7 @@
         function renderCounters() {
             columns.forEach(col => {
                 const el = document.getElementById(`count-${col}`);
-                if (el) el.textContent = boardState[col].length;
+                if (el) el.textContent = (boardState[col] || []).length;
             });
         }
 
@@ -503,17 +713,15 @@
                 const btn = document.getElementById(`tab-${t}`);
                 if (btn) btn.className = t === tab ? "px-6 py-2 rounded-lg text-sm font-bold transition-all bg-blue-600 text-white shadow-lg" : "px-6 py-2 rounded-lg text-sm font-bold transition-all text-zinc-400 hover:text-white";
             });
+
+            // Trigger re-render of dynamic content when switching tabs
+            if (tab === 'docs') renderDocs();
+            if (tab === 'activity') renderActivity();
+            if (tab === 'usage') renderUsage();
         }
 
         async function fetchAgentStatus() {
-            try {
-                const [agentsRes, zacRes] = await Promise.all([
-                    fetch(`agents_status.json?t=${Date.now()}`),
-                    fetch(`zac_status.json?t=${Date.now()}`)
-                ]);
-                if (agentsRes.ok) renderAgents(await agentsRes.json());
-                if (zacRes.ok) updateZacState(await zacRes.json());
-            } catch (err) {}
+            // Deprecated in favor of refreshDynamicData
         }
 
         function renderAgents(agents) {
@@ -521,23 +729,42 @@
             const countEl = document.getElementById('agent-count');
             const activeAgents = agents.filter(a => a.status === 'RUNNING');
             countEl.textContent = `${activeAgents.length} Active`;
-            container.innerHTML = activeAgents.map(agent => `
-                <div class="glass p-4 rounded-xl border-l-2 border-l-blue-500 bg-blue-500/5">
-                    <div class="flex items-center gap-3 mb-2">
-                        <div class="p-2 rounded-lg bg-purple-500/10 text-purple-400">
-                            <i data-lucide="bot" class="w-4 h-4"></i>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <h4 class="text-sm font-semibold truncate text-zinc-200">${agent.label}</h4>
-                            <div class="flex items-center gap-2">
-                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
-                                <span class="text-[10px] text-blue-400 font-mono">RUNNING</span>
-                            </div>
-                        </div>
+            
+            if (agents.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-8 text-zinc-600">
+                        <i data-lucide="ghost" class="w-12 h-12 mb-2 opacity-20"></i>
+                        <p class="text-xs font-medium uppercase tracking-wider">No active sub-agents</p>
                     </div>
-                    <p class="text-[11px] text-zinc-400 italic">"${agent.task}"</p>
-                </div>
-            `).join('');
+                `;
+            } else {
+                container.innerHTML = agents.map(agent => {
+                    const isRunning = agent.status === 'RUNNING';
+                    const statusClass = isRunning ? 'bg-blue-500' : 'bg-zinc-500';
+                    const containerClass = isRunning 
+                        ? 'border-l-blue-500 bg-blue-500/5' 
+                        : 'border-l-zinc-700 bg-zinc-900/50 opacity-60 grayscale';
+                    const iconColorClass = isRunning ? 'text-purple-400' : 'text-zinc-500';
+
+                    return `
+                        <div class="glass p-4 rounded-xl border-l-2 ${containerClass} transition-all">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="p-2 rounded-lg bg-zinc-800/50 ${iconColorClass}">
+                                    <i data-lucide="bot" class="w-4 h-4"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-sm font-semibold truncate text-zinc-200">${agent.label}</h4>
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-1.5 h-1.5 rounded-full ${statusClass} ${isRunning ? 'animate-pulse' : ''}"></span>
+                                        <span class="text-[10px] ${isRunning ? 'text-blue-400' : 'text-zinc-500'} font-mono">${agent.status}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-[11px] text-zinc-400 italic">"${agent.task}"</p>
+                        </div>
+                    `;
+                }).join('');
+            }
             lucide.createIcons();
         }
 
