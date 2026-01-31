@@ -414,6 +414,16 @@
 
         // --- Rendering Functions ---
 
+        function getTagColorClass(tag) {
+            switch (tag) {
+                case 'GUIDE': return 'bg-blue-500/10 text-blue-400';
+                case 'HISTORY': return 'bg-amber-500/10 text-amber-400';
+                case 'RESEARCH': return 'bg-purple-500/10 text-purple-400';
+                case 'PLAN': return 'bg-emerald-500/10 text-emerald-400';
+                default: return 'bg-zinc-800 text-zinc-500';
+            }
+        }
+
         function renderDocs() {
             const listContainer = document.getElementById('docs-list');
             if (!listContainer) return;
@@ -433,7 +443,7 @@
                     <div class="flex-1 min-w-0">
                         <h4 class="text-xs font-bold text-zinc-300 truncate">${doc.title}</h4>
                         <div class="flex items-center gap-2 mt-1">
-                            <span class="text-[9px] px-1 py-0.5 rounded bg-zinc-800 text-zinc-500 font-bold uppercase tracking-tighter">${doc.tag}</span>
+                            <span class="text-[9px] px-1 py-0.5 rounded font-bold uppercase tracking-tighter ${getTagColorClass(doc.tag)}">${doc.tag}</span>
                             <span class="text-[9px] text-zinc-600 truncate">${doc.path}</span>
                         </div>
                     </div>
@@ -469,8 +479,10 @@
                 if (doc) {
                     document.getElementById('doc-title').textContent = doc.title;
                     document.getElementById('doc-meta-path').textContent = doc.path;
-                    document.getElementById('doc-meta-tag').textContent = doc.tag;
-                    document.getElementById('doc-meta-tag').classList.remove('hidden');
+                    const tagEl = document.getElementById('doc-meta-tag');
+                    tagEl.textContent = doc.tag;
+                    tagEl.className = `text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter ${getTagColorClass(doc.tag)}`;
+                    tagEl.classList.remove('hidden');
                     document.getElementById('doc-main-icon').setAttribute('data-lucide', doc.icon || 'file-text');
                     lucide.createIcons();
                 }
