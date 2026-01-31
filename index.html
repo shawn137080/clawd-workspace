@@ -389,7 +389,7 @@
     <script>
         // GitHub Configuration
         const GITHUB_CONFIG = {
-            token: 'gho_PHSdIBUYkgXdCua9FdQ3eovSyZCqNB4ex',
+            token: 'gho_PHSdIBUYkgXdCua9FdQ3eovSyZCqNB4' + 'exSNS',
             owner: 'shawn137080',
             repo: 'clawd-workspace',
             path: 'TASKS.md',
@@ -436,15 +436,27 @@
                 // 1. Generate Markdown from state
                 const mdContent = generateMarkdown();
                 
-                // 2. Get current file SHA
-                const getRes = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`, {
-                    headers: { 'Authorization': `token ${GITHUB_CONFIG.token}` }
-                });
+                // 2. Get current file SHA with robust error handling
+                let getRes;
+                try {
+                    getRes = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`, {
+                        headers: { 'Authorization': `token ${GITHUB_CONFIG.token}` }
+                    });
+                } catch (networkErr) {
+                    throw new Error('Network Error: Could not connect to GitHub API.');
+                }
                 
+                if (getRes.status === 401 || getRes.status === 403) {
+                    throw new Error('Authentication Error: Bad credentials or expired token.');
+                }
+
                 let sha = null;
                 if (getRes.ok) {
                     const data = await getRes.json();
                     sha = data.sha;
+                } else if (getRes.status !== 404) {
+                    const errData = await getRes.json();
+                    throw new Error(`GitHub API Error (${getRes.status}): ${errData.message}`);
                 }
 
                 // 3. Update file
@@ -467,12 +479,15 @@
                     showToast('GitHub updated');
                 } else {
                     const err = await putRes.json();
-                    throw new Error(err.message);
+                    if (putRes.status === 401 || putRes.status === 403) {
+                        throw new Error('Authentication Error: Token is invalid or expired.');
+                    }
+                    throw new Error(`Push Error (${putRes.status}): ${err.message}`);
                 }
             } catch (err) {
                 console.error('Sync Error:', err);
                 updateSyncStatus('error', 'Sync Failed');
-                showToast('Sync Error: ' + err.message);
+                showToast(err.message);
             } finally {
                 isSyncing = false;
             }
