@@ -319,29 +319,83 @@
 
         async function fetchAgentStatus() {
             try {
+                // Fetch with cache-busting and robust error handling
                 const [agentsRes, zacRes] = await Promise.all([
-                    fetch('agents_status.json'),
-                    fetch('zac_status.json')
+                    fetch(`agents_status.json?t=${Date.now()}`),
+                    fetch(`zac_status.json?t=${Date.now()}`)
                 ]);
                 
                 if (agentsRes.ok) {
                     const agents = await agentsRes.json();
                     renderAgents(agents);
                 } else {
-                    renderAgentsSimulation();
+                    renderEmptyAgents('Agent status source missing');
                 }
                 
                 if (zacRes.ok) {
                     const zacStatus = await zacRes.json();
                     updateZacState(zacStatus);
-                } else {
-                    updateZacSimulation();
                 }
             } catch (err) {
-                console.warn('Status files not found, using simulation');
-                renderAgentsSimulation();
-                updateZacSimulation();
+                console.error('Failed to fetch status:', err);
+                renderEmptyAgents('Status offline');
             }
+        }
+
+        function renderEmptyAgents(message = 'No active agents') {
+            const container = document.getElementById('agent-list');
+            const countEl = document.getElementById('agent-count');
+            if (countEl) countEl.textContent = '0 Active';
+            if (container) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-8 text-zinc-600 border-2 border-dashed border-zinc-800 rounded-xl">
+                        <i data-lucide="ghost" class="w-8 h-8 mb-2 opacity-20"></i>
+                        <p class="text-xs uppercase tracking-widest font-medium">${message}</p>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+        }
+
+        function renderAgents(agents) {
+            const container = document.getElementById('agent-list');
+            const countEl = document.getElementById('agent-count');
+            if (!container) return;
+
+            if (!agents || agents.length === 0) {
+                renderEmptyAgents();
+                return;
+            }
+            
+            const activeCount = agents.filter(a => a.status === 'Running').length;
+            if (countEl) countEl.textContent = `${activeCount} Active`;
+
+            container.innerHTML = '';
+            agents.forEach(agent => {
+                const config = agentConfig[agent.type] || agentConfig.default;
+                const isRunning = agent.status === 'Running';
+                
+                const card = document.createElement('div');
+                // Updated UI logic: Immediate reflection of status without confusing animations for 'Completed'
+                card.className = `glass p-4 rounded-xl border-l-2 ${isRunning ? 'border-l-blue-500 bg-blue-500/5' : 'border-l-zinc-700 opacity-60'} hover:bg-zinc-800/40 transition-all`;
+                card.innerHTML = `
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="p-2 rounded-lg ${config.bg} ${config.color}">
+                            <i data-lucide="${config.icon}" class="w-4 h-4"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-sm font-semibold truncate text-zinc-200">${agent.label}</h4>
+                            <div class="flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full ${isRunning ? 'bg-blue-500 animate-pulse' : 'bg-zinc-600'}"></span>
+                                <span class="text-[10px] ${isRunning ? 'text-blue-400' : 'text-zinc-500'} uppercase tracking-tight font-mono">${agent.status}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-zinc-400 line-clamp-2 italic">"${agent.task}"</p>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
         }
 
         function updateZacState(data) {
@@ -371,61 +425,6 @@
                     feed.scrollTop = feed.scrollHeight;
                 }
             }
-        }
-
-        function updateZacSimulation() {
-            const mockData = {
-                status: 'Thinking',
-                thoughts: [
-                    { time: '14:20:01', text: 'Analyzing project structure...' },
-                    { time: '14:20:05', text: 'Optimizing dashboard components for real-time updates.' },
-                    { time: '14:20:12', text: 'Updating HEARTBEAT.md with dual-export logic.' },
-                    { time: '14:20:15', text: 'Preparing Git push to synchronize Mission Control.' }
-                ]
-            };
-            updateZacState(mockData);
-        }
-
-        function renderAgents(agents) {
-            const container = document.getElementById('agent-list');
-            const countEl = document.getElementById('agent-count');
-            if (!container) return;
-            container.innerHTML = '';
-            
-            const activeCount = agents.filter(a => a.status === 'Running').length;
-            if (countEl) countEl.textContent = `${activeCount} Active`;
-
-            agents.forEach(agent => {
-                const config = agentConfig[agent.type] || agentConfig.default;
-                const isRunning = agent.status === 'Running';
-                
-                const card = document.createElement('div');
-                card.className = `glass p-4 rounded-xl border-l-2 ${isRunning ? 'border-l-blue-500' : 'border-l-zinc-700'} hover:bg-zinc-800/40 transition-all`;
-                card.innerHTML = `
-                    <div class="flex items-center gap-3 mb-2">
-                        <div class="p-2 rounded-lg ${config.bg} ${config.color}">
-                            <i data-lucide="${config.icon}" class="w-4 h-4"></i>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <h4 class="text-sm font-semibold truncate text-zinc-200">${agent.label}</h4>
-                            <div class="flex items-center gap-2">
-                                <span class="w-1.5 h-1.5 rounded-full ${isRunning ? 'bg-blue-500 animate-pulse' : 'bg-zinc-600'}"></span>
-                                <span class="text-[10px] text-zinc-500 uppercase tracking-tight">${agent.status}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="text-[11px] text-zinc-400 line-clamp-2 italic">"${agent.task}"</p>
-                `;
-                container.appendChild(card);
-            });
-            lucide.createIcons();
-        }
-
-        function renderAgentsSimulation() {
-            renderAgents([
-                { id: '1', label: 'UIUXArchitect', status: 'Running', task: 'Upgrading Kanban dashboard...', type: 'architect' },
-                { id: '2', label: 'DataScraper', status: 'Completed', task: 'Market research finished.', type: 'scraper' }
-            ]);
         }
 
         function renderCounters() {

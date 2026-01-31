@@ -1,26 +1,42 @@
 [
   {
-    "id": "f9a5370c-413a-4ad9-bca7-340f3e1ab768",
-    "label": "UIUXArchitect",
+    "id": "48afa636-d180-4fcb-b340-b0a5f04d4772",
+    "label": "Sub-207a5e49",
     "status": "Running",
-    "task": "Upgrading Kanban dashboard with Sub-Agent Activity Monitor.",
-    "type": "architect",
-    "updatedAt": 1769881159875
+    "task": "gemini-3-flash-preview",
+    "type": "default",
+    "updatedAt": 1769882096631
   },
   {
-    "id": "a2e3b043-bc4f-42e8-a0cb-ff62c64cabe9",
-    "label": "DataScraper",
+    "id": "c003b86a-c6ed-424a-8d9b-d43c6cf15b92",
+    "label": "Sub-8c02f03c",
     "status": "Completed",
-    "task": "Fetching latest market data for rental properties.",
-    "type": "scraper",
-    "updatedAt": 1769881069773
+    "task": "gemini-3-flash-preview",
+    "type": "default",
+    "updatedAt": 1769881860456
   },
   {
-    "id": "e9deec56-023f-4dc4-9da4-e8ba3374c719",
-    "label": "DevOpsBot",
+    "id": "ed9d5461-db2d-4775-a1d9-954d2d7d8cea",
+    "label": "Sub-e7e88489",
     "status": "Completed",
-    "task": "Deploying updates to the mission control gateway.",
-    "type": "devops",
-    "updatedAt": 1769880969743
+    "task": "gemini-3-flash-preview",
+    "type": "default",
+    "updatedAt": 1769881614592
+  },
+  {
+    "id": "c8a3b0f0-c154-401a-83a8-1bd06320bad7",
+    "label": "Sub-a40efe08",
+    "status": "Completed",
+    "task": "gemini-3-flash-preview",
+    "type": "default",
+    "updatedAt": 1769881527265
+  },
+  {
+    "id": "a6391867-e5b6-43a5-9249-3d1bd00e27ff",
+    "label": "Sub-e661b8b9",
+    "status": "Completed",
+    "task": "gemini-3-flash-preview",
+    "type": "default",
+    "updatedAt": 1769881379368
   }
 ]

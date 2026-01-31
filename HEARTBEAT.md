@@ -20,5 +20,6 @@
      - Link to local `dashboard.html` (if on host).
 4. **Agent Monitoring (Dual Export)**:
    - **Sub-Agents**: Use `clawdbot sessions list --json` to get session data. Extract `key`, `updatedAt`, and `ageMs`. Determine "Status" (Running if `ageMs` < 60000, else Completed). Use `aiberm/openai/gpt-5.2-codex` logic to map `key` labels to readable names and icons. Write to `agents_status.json`.
-   - **Zac (Main Agent)**: Create/Update `zac_status.json`. Use `aiberm/openai/gpt-5.2-codex` to summarize current active thoughts or reasoning steps from the main session history. Maintain a rolling log of the last 10 "thoughts" with timestamps.
+   - **Zac (Main Agent)**: Use `aiberm/claude-opus-4-5-20251101-thinking` for all reasoning and conversation.
+- **Coding Tasks**: Always delegate to a sub-agent or use `aiberm/openai/gpt-5.2-codex` for logic/scripts.
 5. Update `lastDashboardPing` in `memory/heartbeat-state.json`.
