@@ -98,7 +98,20 @@
             </section>
 
             <!-- Kanban Board -->
-            <main class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <main class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+                <!-- Backlog Column -->
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center justify-between px-2">
+                        <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                            Backlog <span id="count-backlog" class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px]">0</span>
+                        </h2>
+                        <button onclick="addNewTask('backlog')" class="text-zinc-500 hover:text-white transition-colors">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div id="backlog" class="kanban-column flex flex-col gap-3 p-2 rounded-lg"></div>
+                </div>
+
                 <!-- Todo Column -->
                 <div class="flex flex-col gap-4">
                     <div class="flex items-center justify-between px-2">
@@ -118,6 +131,9 @@
                         <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
                             In Progress <span id="count-inprogress" class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px]">0</span>
                         </h2>
+                        <button onclick="addNewTask('inprogress')" class="text-zinc-500 hover:text-white transition-colors">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        </button>
                     </div>
                     <div id="inprogress" class="kanban-column flex flex-col gap-3 p-2 rounded-lg"></div>
                 </div>
@@ -128,6 +144,9 @@
                         <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
                             Done <span id="count-done" class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px]">0</span>
                         </h2>
+                        <button onclick="addNewTask('done')" class="text-zinc-500 hover:text-white transition-colors">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        </button>
                     </div>
                     <div id="done" class="kanban-column flex flex-col gap-3 p-2 rounded-lg"></div>
                 </div>
@@ -159,7 +178,6 @@
                     <div class="text-zinc-500">Initializing thought stream...</div>
                 </div>
             </section>
-        </div>
         </div>
 
         <!-- Sub-Agent Activity Monitor (Sidebar) -->
@@ -238,6 +256,9 @@
     <script>
         // Use 'aiberm/openai/gpt-5.2-codex' coding logic for state and rendering
         let boardState = {
+            backlog: [
+                { id: '0', content: 'Explore potential AI frameworks for sub-agent scaling', project: 'General Tasks' }
+            ],
             todo: [
                 { id: '1', content: 'Complete RESEARCH_PLAN.md setup', project: 'Ecommerce Research' },
                 { id: '2', content: 'Review PLAN.md initial steps', project: 'Rental Property Project' },
@@ -251,6 +272,8 @@
             ]
         };
 
+        let currentAddCol = 'todo';
+
         const agentConfig = {
             architect: { icon: 'pen-tool', color: 'text-blue-400', bg: 'bg-blue-500/10' },
             scraper: { icon: 'search', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
@@ -260,13 +283,39 @@
 
         // Initialize
         lucide.createIcons();
-        const columns = ['todo', 'inprogress', 'done'];
-        columns.forEach(id => {
-            new Sortable(document.getElementById(id), {
-                group: 'kanban', animation: 150, ghostClass: 'ghost-card',
-                onEnd: () => { updateStateFromDOM(); renderCounters(); showToast('Task moved'); }
+        const columns = ['backlog', 'todo', 'inprogress', 'done'];
+        
+        function initSortable() {
+            columns.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    new Sortable(el, {
+                        group: 'kanban', 
+                        animation: 150, 
+                        ghostClass: 'ghost-card',
+                        onEnd: () => { 
+                            updateStateFromDOM(); 
+                            renderCounters(); 
+                            showToast('Task moved'); 
+                        }
+                    });
+                }
             });
-        });
+        }
+
+        function updateStateFromDOM() {
+            columns.forEach(col => {
+                const columnEl = document.getElementById(col);
+                const taskEls = columnEl.querySelectorAll('.task-card');
+                boardState[col] = Array.from(taskEls).map(el => {
+                    return {
+                        id: el.dataset.id,
+                        content: el.querySelector('p').textContent,
+                        project: el.dataset.project
+                    };
+                });
+            });
+        }
 
         async function fetchAgentStatus() {
             try {
@@ -278,11 +327,15 @@
                 if (agentsRes.ok) {
                     const agents = await agentsRes.json();
                     renderAgents(agents);
+                } else {
+                    renderAgentsSimulation();
                 }
                 
                 if (zacRes.ok) {
                     const zacStatus = await zacRes.json();
                     updateZacState(zacStatus);
+                } else {
+                    updateZacSimulation();
                 }
             } catch (err) {
                 console.warn('Status files not found, using simulation');
@@ -293,24 +346,30 @@
 
         function updateZacState(data) {
             // Update Header Status
-            document.getElementById('status-text').textContent = data.status || 'Active';
+            const statusText = document.getElementById('status-text');
+            if (statusText) statusText.textContent = data.status || 'Active';
+            
             const dotColor = data.status === 'Thinking' ? 'bg-amber-500' : (data.status === 'Working' ? 'bg-blue-500' : 'bg-emerald-500');
-            document.getElementById('status-dot').className = `relative inline-flex rounded-full h-3 w-3 ${dotColor}`;
-            document.getElementById('status-ping').className = `animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${dotColor}`;
+            const statusDot = document.getElementById('status-dot');
+            const statusPing = document.getElementById('status-ping');
+            if (statusDot) statusDot.className = `relative inline-flex rounded-full h-3 w-3 ${dotColor}`;
+            if (statusPing) statusPing.className = `animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${dotColor}`;
 
             // Update Thought Feed
             if (data.thoughts && data.thoughts.length > 0) {
                 const feed = document.getElementById('thought-feed');
-                feed.innerHTML = data.thoughts.map(t => `
-                    <div class="flex gap-4 group">
-                        <span class="text-zinc-600 shrink-0 select-none">[${t.time}]</span>
-                        <div class="flex-1">
-                            <span class="text-blue-400 font-bold">$</span>
-                            <span class="text-zinc-300 ml-2">${t.text}</span>
+                if (feed) {
+                    feed.innerHTML = data.thoughts.map(t => `
+                        <div class="flex gap-4 group">
+                            <span class="text-zinc-600 shrink-0 select-none">[${t.time}]</span>
+                            <div class="flex-1">
+                                <span class="text-blue-400 font-bold">$</span>
+                                <span class="text-zinc-300 ml-2">${t.text}</span>
+                            </div>
                         </div>
-                    </div>
-                `).join('');
-                feed.scrollTop = feed.scrollHeight;
+                    `).join('');
+                    feed.scrollTop = feed.scrollHeight;
+                }
             }
         }
 
@@ -330,10 +389,11 @@
         function renderAgents(agents) {
             const container = document.getElementById('agent-list');
             const countEl = document.getElementById('agent-count');
+            if (!container) return;
             container.innerHTML = '';
             
             const activeCount = agents.filter(a => a.status === 'Running').length;
-            countEl.textContent = `${activeCount} Active`;
+            if (countEl) countEl.textContent = `${activeCount} Active`;
 
             agents.forEach(agent => {
                 const config = agentConfig[agent.type] || agentConfig.default;
@@ -368,9 +428,17 @@
             ]);
         }
 
+        function renderCounters() {
+            columns.forEach(col => {
+                const el = document.getElementById(`count-${col}`);
+                if (el) el.textContent = boardState[col].length;
+            });
+        }
+
         function renderBoard() {
             columns.forEach(col => {
                 const container = document.getElementById(col);
+                if (!container) return;
                 container.innerHTML = '';
                 boardState[col].forEach(task => {
                     const card = document.createElement('div');
@@ -400,20 +468,37 @@
             lucide.createIcons();
         }
 
+        function addNewTask(col) {
+            currentAddCol = col;
+            document.getElementById('task-modal').classList.remove('hidden');
+            document.getElementById('task-modal').classList.add('flex');
+            document.getElementById('task-input').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('task-modal').classList.add('hidden');
+            document.getElementById('task-modal').classList.remove('flex');
+            document.getElementById('task-input').value = '';
+        }
+
         function saveTask() {
             const content = document.getElementById('task-input').value.trim();
             if (content) {
-                boardState[currentAddCol].push({ id: Date.now().toString(), content, project: 'General Tasks' });
-                renderBoard(); closeModal(); showToast('Task added');
+                boardState[currentAddCol].push({ 
+                    id: Date.now().toString(), 
+                    content, 
+                    project: 'General Tasks' 
+                });
+                renderBoard(); 
+                closeModal(); 
+                showToast('Task added');
             }
         }
+
         function deleteTask(id) {
             columns.forEach(c => boardState[c] = boardState[c].filter(t => t.id !== id));
-            renderBoard(); showToast('Task deleted');
-        }
-
-        function updateZacStatus() {
-            // Heartbeat fetch handles this now
+            renderBoard(); 
+            showToast('Task deleted');
         }
 
         function copyData() {
@@ -422,11 +507,16 @@
 
         function showToast(msg) {
             const t = document.getElementById('toast');
-            document.getElementById('toast-message').textContent = msg;
-            t.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3000);
+            const msgEl = document.getElementById('toast-message');
+            if (msgEl) msgEl.textContent = msg;
+            if (t) {
+                t.classList.remove('translate-y-20', 'opacity-0');
+                setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3000);
+            }
         }
 
+        // Initialize App
+        initSortable();
         setInterval(fetchAgentStatus, 5000);
         fetchAgentStatus();
         renderBoard();
