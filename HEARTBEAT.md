@@ -1,6 +1,9 @@
 # Heartbeat Check - Task Dashboard
 
 ## Periodic Tasks
+- **True Auto-Sync Check**:
+  - Run `git pull` to fetch latest changes from `shawn137080/clawd-workspace` (specifically `TASKS.md`).
+  - If remote changes detected, merge or overwrite local `TASKS.md` to ensure the workspace reflects UI updates made via GitHub API.
 - Read `TASKS.md` and check the last update time.
 - If it has been more than 4 hours since the last "Mission Control" ping (check `memory/heartbeat-state.json`), send a rich-text summary to Telegram.
 - Check `dashboard.html` exists and is accessible for reference.
