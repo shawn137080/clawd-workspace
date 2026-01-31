@@ -1,0 +1,26 @@
+[
+  {
+    "id": "f9a5370c-413a-4ad9-bca7-340f3e1ab768",
+    "label": "UIUXArchitect",
+    "status": "Running",
+    "task": "Upgrading Kanban dashboard with Sub-Agent Activity Monitor.",
+    "type": "architect",
+    "updatedAt": 1769881159875
+  },
+  {
+    "id": "a2e3b043-bc4f-42e8-a0cb-ff62c64cabe9",
+    "label": "DataScraper",
+    "status": "Completed",
+    "task": "Fetching latest market data for rental properties.",
+    "type": "scraper",
+    "updatedAt": 1769881069773
+  },
+  {
+    "id": "e9deec56-023f-4dc4-9da4-e8ba3374c719",
+    "label": "DevOpsBot",
+    "status": "Completed",
+    "task": "Deploying updates to the mission control gateway.",
+    "type": "devops",
+    "updatedAt": 1769880969743
+  }
+]

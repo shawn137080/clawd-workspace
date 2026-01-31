@@ -20,111 +20,152 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(0.33); opacity: 0; }
+            80%, 100% { opacity: 0; }
+        }
+        .status-pulse { position: relative; }
+        .status-pulse::before {
+            content: ''; position: absolute; left: -4px; top: -4px; width: 20px; height: 20px;
+            border-radius: 50%; background-color: currentColor;
+            animation: pulse-ring 1.25s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
     </style>
 </head>
 <body class="p-6 md:p-10">
-    <!-- Header Section -->
-    <header class="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-            <h1 class="text-3xl font-bold tracking-tight text-white mb-2 flex items-center gap-3">
-                <i data-lucide="layout-dashboard" class="text-blue-500"></i>
-                Mission Control
-            </h1>
-            <p class="text-zinc-400">Manage projects, tasks, and system status.</p>
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Main Content -->
+        <div class="flex-1">
+            <!-- Header Section -->
+            <header class="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <h1 class="text-3xl font-bold tracking-tight text-white mb-2 flex items-center gap-3">
+                        <i data-lucide="layout-dashboard" class="text-blue-500"></i>
+                        Mission Control
+                    </h1>
+                    <p class="text-zinc-400">Manage projects, tasks, and system status.</p>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div id="zac-status-container" class="glass px-4 py-2 rounded-full flex items-center gap-3">
+                        <span class="relative flex h-3 w-3">
+                            <span id="status-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"></span>
+                            <span id="status-dot" class="relative inline-flex rounded-full h-3 w-3"></span>
+                        </span>
+                        <span class="text-sm font-medium">Zac: <span id="status-text" class="text-zinc-300">Syncing...</span></span>
+                    </div>
+                    
+                    <button onclick="copyData()" class="glass hover:bg-zinc-800 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+                        <i data-lucide="copy" class="w-4 h-4"></i> Sync JSON
+                    </button>
+                </div>
+            </header>
+
+            <!-- Progress Section -->
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                <div class="glass p-5 rounded-xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-semibold flex items-center gap-2 text-zinc-200">
+                            <i data-lucide="shopping-cart" class="w-4 h-4 text-orange-400"></i> Ecommerce Research
+                        </h3>
+                        <span class="text-xs text-zinc-500">Active</span>
+                    </div>
+                    <div class="w-full bg-zinc-800 rounded-full h-2 mb-2">
+                        <div class="bg-orange-500 h-2 rounded-full" style="width: 65%"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-zinc-500 uppercase tracking-wider">
+                        <span>Phase: Discovery</span>
+                        <span>65% Complete</span>
+                    </div>
+                </div>
+
+                <div class="glass p-5 rounded-xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-semibold flex items-center gap-2 text-zinc-200">
+                            <i data-lucide="home" class="w-4 h-4 text-blue-400"></i> Rental/Buy Property
+                        </h3>
+                        <span class="text-xs text-zinc-500">Active</span>
+                    </div>
+                    <div class="w-full bg-zinc-800 rounded-full h-2 mb-2">
+                        <div class="bg-blue-500 h-2 rounded-full" style="width: 40%"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-zinc-500 uppercase tracking-wider">
+                        <span>Phase: Scraper Setup</span>
+                        <span>40% Complete</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Kanban Board -->
+            <main class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Todo Column -->
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center justify-between px-2">
+                        <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                            Todo <span id="count-todo" class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px]">0</span>
+                        </h2>
+                        <button onclick="addNewTask('todo')" class="text-zinc-500 hover:text-white transition-colors">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div id="todo" class="kanban-column flex flex-col gap-3 p-2 rounded-lg"></div>
+                </div>
+
+                <!-- In Progress Column -->
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center justify-between px-2">
+                        <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                            In Progress <span id="count-inprogress" class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px]">0</span>
+                        </h2>
+                    </div>
+                    <div id="inprogress" class="kanban-column flex flex-col gap-3 p-2 rounded-lg"></div>
+                </div>
+
+                <!-- Done Column -->
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center justify-between px-2">
+                        <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                            Done <span id="count-done" class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px]">0</span>
+                        </h2>
+                    </div>
+                    <div id="done" class="kanban-column flex flex-col gap-3 p-2 rounded-lg"></div>
+                </div>
+            </main>
         </div>
 
-        <div class="flex items-center gap-4">
-            <!-- Zac Status Indicator -->
-            <div id="zac-status-container" class="glass px-4 py-2 rounded-full flex items-center gap-3">
-                <span class="relative flex h-3 w-3">
-                    <span id="status-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"></span>
-                    <span id="status-dot" class="relative inline-flex rounded-full h-3 w-3"></span>
-                </span>
-                <span class="text-sm font-medium">Zac: <span id="status-text" class="text-zinc-300">Syncing...</span></span>
+        <!-- Sub-Agent Activity Monitor (Sidebar) -->
+        <aside class="w-full lg:w-80 shrink-0">
+            <div class="glass rounded-2xl p-6 sticky top-10">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-lg font-bold flex items-center gap-2">
+                        <i data-lucide="cpu" class="text-purple-500 w-5 h-5"></i>
+                        Sub-Agents
+                    </h2>
+                    <span id="agent-count" class="text-xs bg-zinc-800 text-zinc-400 px-2 py-1 rounded-full">0 Active</span>
+                </div>
+                
+                <div id="agent-list" class="flex flex-col gap-4">
+                    <!-- Agent items injected here -->
+                    <div class="animate-pulse flex flex-col gap-3">
+                        <div class="h-16 bg-zinc-800/50 rounded-xl"></div>
+                        <div class="h-16 bg-zinc-800/50 rounded-xl"></div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t border-zinc-800">
+                    <p class="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">System Resources</p>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-zinc-400">Memory Usage</span>
+                        <span class="text-zinc-200">1.2 GB / 8 GB</span>
+                    </div>
+                    <div class="w-full bg-zinc-800 rounded-full h-1">
+                        <div class="bg-purple-500 h-1 rounded-full" style="width: 15%"></div>
+                    </div>
+                </div>
             </div>
-            
-            <button onclick="copyData()" class="glass hover:bg-zinc-800 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
-                <i data-lucide="copy" class="w-4 h-4"></i> Sync JSON
-            </button>
-        </div>
-    </header>
-
-    <!-- Progress Section -->
-    <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        <div class="glass p-5 rounded-xl">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-semibold flex items-center gap-2 text-zinc-200">
-                    <i data-lucide="shopping-cart" class="w-4 h-4 text-orange-400"></i> Ecommerce Research
-                </h3>
-                <span class="text-xs text-zinc-500">Active</span>
-            </div>
-            <div class="w-full bg-zinc-800 rounded-full h-2 mb-2">
-                <div class="bg-orange-500 h-2 rounded-full" style="width: 65%"></div>
-            </div>
-            <div class="flex justify-between text-[10px] text-zinc-500 uppercase tracking-wider">
-                <span>Phase: Discovery</span>
-                <span>65% Complete</span>
-            </div>
-        </div>
-
-        <div class="glass p-5 rounded-xl">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-semibold flex items-center gap-2 text-zinc-200">
-                    <i data-lucide="home" class="w-4 h-4 text-blue-400"></i> Rental/Buy Property
-                </h3>
-                <span class="text-xs text-zinc-500">Active</span>
-            </div>
-            <div class="w-full bg-zinc-800 rounded-full h-2 mb-2">
-                <div class="bg-blue-500 h-2 rounded-full" style="width: 40%"></div>
-            </div>
-            <div class="flex justify-between text-[10px] text-zinc-500 uppercase tracking-wider">
-                <span>Phase: Scraper Setup</span>
-                <span>40% Complete</span>
-            </div>
-        </div>
-    </section>
-
-    <!-- Kanban Board -->
-    <main class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Todo Column -->
-        <div class="flex flex-col gap-4">
-            <div class="flex items-center justify-between px-2">
-                <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-                    Todo <span id="count-todo" class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px]">0</span>
-                </h2>
-                <button onclick="addNewTask('todo')" class="text-zinc-500 hover:text-white transition-colors">
-                    <i data-lucide="plus" class="w-4 h-4"></i>
-                </button>
-            </div>
-            <div id="todo" class="kanban-column flex flex-col gap-3 p-2 rounded-lg">
-                <!-- Tasks injected here -->
-            </div>
-        </div>
-
-        <!-- In Progress Column -->
-        <div class="flex flex-col gap-4">
-            <div class="flex items-center justify-between px-2">
-                <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-                    In Progress <span id="count-inprogress" class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px]">0</span>
-                </h2>
-            </div>
-            <div id="inprogress" class="kanban-column flex flex-col gap-3 p-2 rounded-lg">
-                <!-- Tasks injected here -->
-            </div>
-        </div>
-
-        <!-- Done Column -->
-        <div class="flex flex-col gap-4">
-            <div class="flex items-center justify-between px-2">
-                <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-                    Done <span id="count-done" class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px]">0</span>
-                </h2>
-            </div>
-            <div id="done" class="kanban-column flex flex-col gap-3 p-2 rounded-lg">
-                <!-- Tasks injected here -->
-            </div>
-        </div>
-    </main>
+        </aside>
+    </div>
 
     <!-- Task Modal (Hidden) -->
     <div id="task-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
@@ -140,12 +181,12 @@
 
     <!-- Notification -->
     <div id="toast" class="fixed bottom-6 right-6 glass px-6 py-3 rounded-xl shadow-xl translate-y-20 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-3 border-l-4 border-l-blue-500">
-        <i data-lucide="check-circle" class="w-5 h-5 text-blue-500"></i>
+        <i id="toast-icon" data-lucide="check-circle" class="w-5 h-5 text-blue-500"></i>
         <span id="toast-message">Board updated</span>
     </div>
 
     <script>
-        // Data Structure
+        // Use 'aiberm/openai/gpt-5.2-codex' coding logic for state and rendering
         let boardState = {
             todo: [
                 { id: '1', content: 'Complete RESEARCH_PLAN.md setup', project: 'Ecommerce' },
@@ -161,64 +202,101 @@
             ]
         };
 
-        // Initialize Lucide Icons
-        lucide.createIcons();
+        const agentConfig = {
+            architect: { icon: 'pen-tool', color: 'text-blue-400', bg: 'bg-blue-500/10' },
+            scraper: { icon: 'search', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+            devops: { icon: 'terminal', color: 'text-orange-400', bg: 'bg-orange-500/10' },
+            default: { icon: 'bot', color: 'text-purple-400', bg: 'bg-purple-500/10' }
+        };
 
-        // Initialize Kanban columns
+        // Initialize
+        lucide.createIcons();
         const columns = ['todo', 'inprogress', 'done'];
         columns.forEach(id => {
-            const el = document.getElementById(id);
-            new Sortable(el, {
-                group: 'kanban',
-                animation: 150,
-                ghostClass: 'ghost-card',
-                onEnd: () => {
-                    updateStateFromDOM();
-                    renderCounters();
-                    showToast('Task moved successfully');
-                }
+            new Sortable(document.getElementById(id), {
+                group: 'kanban', animation: 150, ghostClass: 'ghost-card',
+                onEnd: () => { updateStateFromDOM(); renderCounters(); showToast('Task moved'); }
             });
         });
 
-        // Render functions
+        async function fetchAgentStatus() {
+            try {
+                const response = await fetch('agents_status.json');
+                const agents = await response.json();
+                renderAgents(agents);
+            } catch (err) {
+                console.warn('agents_status.json not found, using simulation');
+                renderAgentsSimulation();
+            }
+        }
+
+        function renderAgents(agents) {
+            const container = document.getElementById('agent-list');
+            const countEl = document.getElementById('agent-count');
+            container.innerHTML = '';
+            
+            const activeCount = agents.filter(a => a.status === 'Running').length;
+            countEl.textContent = `${activeCount} Active`;
+
+            agents.forEach(agent => {
+                const config = agentConfig[agent.type] || agentConfig.default;
+                const isRunning = agent.status === 'Running';
+                
+                const card = document.createElement('div');
+                card.className = `glass p-4 rounded-xl border-l-2 ${isRunning ? 'border-l-blue-500' : 'border-l-zinc-700'} hover:bg-zinc-800/40 transition-all`;
+                card.innerHTML = `
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="p-2 rounded-lg ${config.bg} ${config.color}">
+                            <i data-lucide="${config.icon}" class="w-4 h-4"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-sm font-semibold truncate text-zinc-200">${agent.label}</h4>
+                            <div class="flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full ${isRunning ? 'bg-blue-500 animate-pulse' : 'bg-zinc-600'}"></span>
+                                <span class="text-[10px] text-zinc-500 uppercase tracking-tight">${agent.status}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-zinc-400 line-clamp-2 italic">"${agent.task}"</p>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function renderAgentsSimulation() {
+            renderAgents([
+                { id: '1', label: 'UIUXArchitect', status: 'Running', task: 'Upgrading Kanban dashboard...', type: 'architect' },
+                { id: '2', label: 'DataScraper', status: 'Completed', task: 'Market research finished.', type: 'scraper' }
+            ]);
+        }
+
         function renderBoard() {
             columns.forEach(col => {
                 const container = document.getElementById(col);
                 container.innerHTML = '';
                 boardState[col].forEach(task => {
-                    container.appendChild(createTaskCard(task));
+                    const card = document.createElement('div');
+                    card.className = 'task-card glass p-4 rounded-xl border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/50 transition-all group';
+                    card.dataset.id = task.id;
+                    card.dataset.project = task.project;
+                    const colors = { 'Ecommerce': 'text-orange-400', 'Rental': 'text-blue-400', 'General': 'text-zinc-500' };
+                    card.innerHTML = `
+                        <div class="flex flex-col gap-2">
+                            <div class="flex justify-between items-start">
+                                <span class="text-[10px] font-bold uppercase tracking-widest ${colors[task.project] || 'text-zinc-500'}">${task.project}</span>
+                                <button class="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-red-400" onclick="deleteTask('${task.id}')">
+                                    <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                            <p class="text-sm text-zinc-200 leading-relaxed">${task.content}</p>
+                        </div>
+                    `;
+                    container.appendChild(card);
                 });
             });
             renderCounters();
-        }
-
-        function createTaskCard(task) {
-            const div = document.createElement('div');
-            div.className = 'task-card glass p-4 rounded-xl shadow-sm border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/50 transition-all group';
-            div.dataset.id = task.id;
-            div.dataset.project = task.project;
-            
-            const projectColors = {
-                'Ecommerce': 'text-orange-400',
-                'Rental': 'text-blue-400',
-                'General': 'text-zinc-500'
-            };
-
-            div.innerHTML = `
-                <div class="flex flex-col gap-2">
-                    <div class="flex justify-between items-start">
-                        <span class="text-[10px] font-bold uppercase tracking-widest ${projectColors[task.project] || 'text-zinc-500'}">
-                            ${task.project}
-                        </span>
-                        <button class="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-red-400 transition-all" onclick="deleteTask('${task.id}')">
-                            <i data-lucide="trash-2" class="w-3 h-3"></i>
-                        </button>
-                    </div>
-                    <p class="text-sm text-zinc-200 leading-relaxed">${task.content}</p>
-                </div>
-            `;
             lucide.createIcons();
-            return div;
         }
 
         function renderCounters() {
@@ -227,95 +305,63 @@
             });
         }
 
-        // Logic functions
         function updateStateFromDOM() {
             columns.forEach(col => {
-                const el = document.getElementById(col);
-                const taskCards = Array.from(el.children);
-                boardState[col] = taskCards.map(card => ({
-                    id: card.dataset.id,
-                    content: card.querySelector('p').textContent,
-                    project: card.dataset.project
+                boardState[col] = Array.from(document.getElementById(col).children).map(card => ({
+                    id: card.dataset.id, content: card.querySelector('p').textContent, project: card.dataset.project
                 }));
             });
         }
 
-        let currentAddColumn = 'todo';
+        let currentAddCol = 'todo';
         function addNewTask(col) {
-            currentAddColumn = col;
-            document.getElementById('task-modal').classList.remove('hidden');
-            document.getElementById('task-modal').classList.add('flex');
+            currentAddCol = col;
+            document.getElementById('task-modal').classList.replace('hidden', 'flex');
             document.getElementById('task-input').focus();
         }
-
         function closeModal() {
-            document.getElementById('task-modal').classList.add('hidden');
-            document.getElementById('task-modal').classList.remove('flex');
+            document.getElementById('task-modal').classList.replace('flex', 'hidden');
             document.getElementById('task-input').value = '';
         }
-
         function saveTask() {
             const content = document.getElementById('task-input').value.trim();
-            if (!content) return;
-
-            const newTask = {
-                id: Date.now().toString(),
-                content: content,
-                project: 'General'
-            };
-
-            boardState[currentAddColumn].push(newTask);
-            renderBoard();
-            closeModal();
-            showToast('Task added');
+            if (content) {
+                boardState[currentAddCol].push({ id: Date.now().toString(), content, project: 'General' });
+                renderBoard(); closeModal(); showToast('Task added');
+            }
         }
-
         function deleteTask(id) {
-            columns.forEach(col => {
-                boardState[col] = boardState[col].filter(t => t.id !== id);
-            });
-            renderBoard();
-            showToast('Task deleted');
+            columns.forEach(c => boardState[c] = boardState[c].filter(t => t.id !== id));
+            renderBoard(); showToast('Task deleted');
         }
 
-        // Zac Status Simulation (Link to file logic)
         function updateZacStatus() {
-            // In a real scenario, this would fetch 'memory/heartbeat-state.json'
-            // For now, we simulate based on activity or local storage
             const statuses = [
-                { text: 'Thinking', dot: 'bg-amber-500', ping: 'bg-amber-500' },
-                { text: 'Working', dot: 'bg-blue-500', ping: 'bg-blue-500' },
-                { text: 'Idle', dot: 'bg-emerald-500', ping: 'bg-emerald-500' }
+                { text: 'Thinking', dot: 'bg-amber-500' },
+                { text: 'Working', dot: 'bg-blue-500' },
+                { text: 'Idle', dot: 'bg-emerald-500' }
             ];
-            
-            // Random status for prototype visualization
-            const status = statuses[Math.floor(Math.random() * statuses.length)];
-            
-            document.getElementById('status-text').textContent = status.text;
-            document.getElementById('status-dot').className = `relative inline-flex rounded-full h-3 w-3 ${status.dot}`;
-            document.getElementById('status-ping').className = `animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status.ping}`;
+            const s = statuses[Math.floor(Math.random() * statuses.length)];
+            document.getElementById('status-text').textContent = s.text;
+            document.getElementById('status-dot').className = `relative inline-flex rounded-full h-3 w-3 ${s.dot}`;
+            document.getElementById('status-ping').className = `animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${s.dot}`;
         }
 
-        // Sync Logic
         function copyData() {
-            const data = JSON.stringify(boardState, null, 2);
-            navigator.clipboard.writeText(data).then(() => {
-                showToast('JSON Copied! Paste to TASKS.md update.');
-            });
+            navigator.clipboard.writeText(JSON.stringify(boardState, null, 2)).then(() => showToast('JSON Copied'));
         }
 
         function showToast(msg) {
-            const toast = document.getElementById('toast');
+            const t = document.getElementById('toast');
             document.getElementById('toast-message').textContent = msg;
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 3000);
+            t.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3000);
         }
 
-        // Start
         setInterval(updateZacStatus, 5000);
+        setInterval(fetchAgentStatus, 10000);
         updateZacStatus();
+        fetchAgentStatus();
         renderBoard();
     </script>
 </body>
