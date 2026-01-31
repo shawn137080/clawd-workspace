@@ -1,14 +1,16 @@
 # 📋 Task Management Dashboard
 
 ## 🚀 Active Projects
-- [ ] **Ecommerce Research** (Priority: High)
+- [ ] **Ecommerce Research**
     - [ ] Complete RESEARCH_PLAN.md setup
-- [ ] **Rental Property Project** (Priority: Medium)
+- [ ] **Rental Property Project**
     - [ ] Review PLAN.md initial steps
 
 ## 📥 General Tasks
+- [ ] Explore potential AI frameworks for sub-agent scaling
 - [ ] Setup Task Dashboard Canvas
 - [ ] Configure Heartbeat reminders
+- [ ] tell me a job
 
 ## ✅ Completed
 - [x] Configure OpenRouter and xAI API Keys
