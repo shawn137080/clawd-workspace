@@ -1,0 +1,48 @@
+{
+  "backlog": [],
+  "todo": [
+    {
+      "id": "1",
+      "content": "Complete RESEARCH_PLAN.md setup",
+      "project": "Ecommerce Research"
+    },
+    {
+      "id": "2",
+      "content": "Review PLAN.md initial steps",
+      "project": "Rental Property Project"
+    },
+    {
+      "id": "3",
+      "content": "Explore potential AI frameworks for sub-agent scaling",
+      "project": "General Tasks"
+    },
+    {
+      "id": "4",
+      "content": "Setup Task Dashboard Canvas",
+      "project": "General Tasks"
+    },
+    {
+      "id": "5",
+      "content": "Configure Heartbeat reminders",
+      "project": "General Tasks"
+    },
+    {
+      "id": "6",
+      "content": "tell me a job",
+      "project": "General Tasks"
+    }
+  ],
+  "inprogress": [],
+  "done": [
+    {
+      "id": "7",
+      "content": "Configure OpenRouter and xAI API Keys",
+      "project": "General Tasks"
+    },
+    {
+      "id": "8",
+      "content": "Connect Aiberm Provider",
+      "project": "General Tasks"
+    }
+  ]
+}

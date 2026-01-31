@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zac Kanban | Mission Control</title>
+    <title>Zac Kanban | Local Direct Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -24,21 +24,12 @@
         ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
         
-        @keyframes pulse-ring {
-            0% { transform: scale(0.33); opacity: 0; }
-            80%, 100% { opacity: 0; }
-        }
         .status-pulse { position: relative; }
         .status-pulse::before {
             content: ''; position: absolute; left: -4px; top: -4px; width: 20px; height: 20px;
             border-radius: 50%; background-color: currentColor;
             animation: pulse-ring 1.25s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
         }
-
-        .sync-status { transition: all 0.3s ease; }
-        .sync-status.syncing { color: #3b82f6; }
-        .sync-status.synced { color: #10b981; }
-        .sync-status.error { color: #ef4444; }
 
         /* Markdown Preview Styles */
         .prose { color: #d4d4d8; max-width: none; line-height: 1.6; }
@@ -59,12 +50,16 @@
         .prose th, .prose td { border: 1px solid #27272a; padding: 0.75rem; text-align: left; }
         .prose th { background-color: #18181b; font-weight: 600; }
         
-        /* Sidebar Selection State */
         .doc-item.active { background: #1d4ed8; border-color: #3b82f6; }
         .doc-item.active * { color: #ffffff !important; }
 
-        /* Custom Checkbox for Task Lists */
         .prose input[type="checkbox"] { margin-right: 0.5rem; width: 1rem; height: 1rem; accent-color: #3b82f6; }
+
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(0) translateX(-50%); }
+            50% { transform: translateY(-10px) translateX(-50%); }
+        }
+        .animate-bounce-slow { animation: bounce-slow 2s infinite; }
     </style>
 </head>
 <body class="p-6 md:p-10">
@@ -78,15 +73,10 @@
                         <i data-lucide="layout-dashboard" class="text-blue-500"></i>
                         Mission Control
                     </h1>
-                    <p class="text-zinc-400">Manage projects, tasks, and system status.</p>
+                    <p class="text-zinc-400">Local Direct Mode | Managing tasks from TASKS.md</p>
                 </div>
 
                 <div class="flex items-center gap-4">
-                    <div id="sync-status-indicator" class="glass px-4 py-2 rounded-full flex items-center gap-2 sync-status synced">
-                        <i data-lucide="cloud-check" id="sync-icon" class="w-4 h-4"></i>
-                        <span id="sync-text" class="text-xs font-bold uppercase tracking-wider">Cloud Synced</span>
-                    </div>
-
                     <div id="zac-status-container" class="glass px-4 py-2 rounded-full flex items-center gap-3">
                         <span class="relative flex h-3 w-3">
                             <span id="status-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"></span>
@@ -96,7 +86,7 @@
                     </div>
                     
                     <button onclick="copyData()" class="glass hover:bg-zinc-800 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
-                        <i data-lucide="copy" class="w-4 h-4"></i> Sync JSON
+                        <i data-lucide="copy" class="w-4 h-4"></i> Copy JSON
                     </button>
                 </div>
             </header>
@@ -110,122 +100,87 @@
             </nav>
 
             <div id="view-kanban" class="tab-view">
-                <!-- Progress Section -->
-            <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                <div class="glass p-5 rounded-xl">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-semibold flex items-center gap-2 text-zinc-200">
-                            <i data-lucide="shopping-cart" class="w-4 h-4 text-orange-400"></i> Ecommerce Research
-                        </h3>
-                        <span class="text-xs text-zinc-500">Active</span>
-                    </div>
-                    <div class="w-full bg-zinc-800 rounded-full h-2 mb-2">
-                        <div class="bg-orange-500 h-2 rounded-full" style="width: 65%"></div>
-                    </div>
-                    <div class="flex justify-between text-[10px] text-zinc-500 uppercase tracking-wider">
-                        <span>Phase: Discovery</span>
-                        <span>65% Complete</span>
-                    </div>
-                </div>
-
-                <div class="glass p-5 rounded-xl">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-semibold flex items-center gap-2 text-zinc-200">
-                            <i data-lucide="home" class="w-4 h-4 text-blue-400"></i> Rental/Buy Property
-                        </h3>
-                        <span class="text-xs text-zinc-500">Active</span>
-                    </div>
-                    <div class="w-full bg-zinc-800 rounded-full h-2 mb-2">
-                        <div class="bg-blue-500 h-2 rounded-full" style="width: 40%"></div>
-                    </div>
-                    <div class="flex justify-between text-[10px] text-zinc-500 uppercase tracking-wider">
-                        <span>Phase: Scraper Setup</span>
-                        <span>40% Complete</span>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Kanban Board -->
-            <main class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-                <!-- Backlog Column -->
-                <div class="flex flex-col gap-4">
-                    <div class="flex items-center justify-between px-2">
-                        <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-                            Backlog <span id="count-backlog" class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px]">0</span>
-                        </h2>
-                        <button onclick="addNewTask('backlog')" class="text-zinc-500 hover:text-white transition-colors">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                    <div id="backlog" class="kanban-column flex flex-col gap-3 p-2 rounded-lg"></div>
-                </div>
-
-                <!-- Todo Column -->
-                <div class="flex flex-col gap-4">
-                    <div class="flex items-center justify-between px-2">
-                        <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-                            Todo <span id="count-todo" class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px]">0</span>
-                        </h2>
-                        <button onclick="addNewTask('todo')" class="text-zinc-500 hover:text-white transition-colors">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                    <div id="todo" class="kanban-column flex flex-col gap-3 p-2 rounded-lg"></div>
-                </div>
-
-                <!-- In Progress Column -->
-                <div class="flex flex-col gap-4">
-                    <div class="flex items-center justify-between px-2">
-                        <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-                            In Progress <span id="count-inprogress" class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px]">0</span>
-                        </h2>
-                        <button onclick="addNewTask('inprogress')" class="text-zinc-500 hover:text-white transition-colors">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                    <div id="inprogress" class="kanban-column flex flex-col gap-3 p-2 rounded-lg"></div>
-                </div>
-
-                <!-- Done Column -->
-                <div class="flex flex-col gap-4">
-                    <div class="flex items-center justify-between px-2">
-                        <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-                            Done <span id="count-done" class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px]">0</span>
-                        </h2>
-                        <button onclick="addNewTask('done')" class="text-zinc-500 hover:text-white transition-colors">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                    <div id="done" class="kanban-column flex flex-col gap-3 p-2 rounded-lg"></div>
-                </div>
-            </main>
-
-            <!-- Zac Thought Feed -->
-            <section class="glass rounded-2xl overflow-hidden border-blue-500/20 shadow-2xl shadow-blue-500/5">
-                <div class="bg-zinc-900/50 px-5 py-3 border-b border-zinc-800 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="flex gap-1.5">
-                            <div class="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/40"></div>
-                            <div class="w-3 h-3 rounded-full bg-amber-500/20 border border-amber-500/40"></div>
-                            <div class="w-3 h-3 rounded-full bg-emerald-500/20 border border-emerald-500/40"></div>
+                <!-- Kanban Board -->
+                <main class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+                    <!-- Backlog Column -->
+                    <div class="flex flex-col gap-4">
+                        <div class="flex items-center justify-between px-2">
+                            <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                                Backlog <span id="count-backlog" class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px]">0</span>
+                            </h2>
+                            <button onclick="addNewTask('backlog')" class="text-zinc-500 hover:text-white transition-colors">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            </button>
                         </div>
-                        <span class="text-xs font-mono text-zinc-500 uppercase tracking-widest ml-2 flex items-center gap-2">
-                            <i data-lucide="terminal" class="w-3 h-3"></i>
-                            Zac_Thought_Feed.log
-                        </span>
+                        <div id="backlog" class="kanban-column flex flex-col gap-3 p-2 rounded-lg"></div>
                     </div>
-                    <div id="zac-live-indicator" class="flex items-center gap-2 text-[10px] font-mono text-blue-400">
-                        <span class="relative flex h-2 w-2">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-                        </span>
-                        LIVE_STREAM
+
+                    <!-- Todo Column -->
+                    <div class="flex flex-col gap-4">
+                        <div class="flex items-center justify-between px-2">
+                            <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                                Todo <span id="count-todo" class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px]">0</span>
+                            </h2>
+                            <button onclick="addNewTask('todo')" class="text-zinc-500 hover:text-white transition-colors">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <div id="todo" class="kanban-column flex flex-col gap-3 p-2 rounded-lg"></div>
                     </div>
-                </div>
-                <div id="thought-feed" class="p-6 h-[300px] overflow-y-auto font-mono text-sm space-y-3 scroll-smooth">
-                    <div class="text-zinc-500">Initializing thought stream...</div>
-                </div>
-            </section>
+
+                    <!-- In Progress Column -->
+                    <div class="flex flex-col gap-4">
+                        <div class="flex items-center justify-between px-2">
+                            <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                                In Progress <span id="count-inprogress" class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px]">0</span>
+                            </h2>
+                            <button onclick="addNewTask('inprogress')" class="text-zinc-500 hover:text-white transition-colors">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <div id="inprogress" class="kanban-column flex flex-col gap-3 p-2 rounded-lg"></div>
+                    </div>
+
+                    <!-- Done Column -->
+                    <div class="flex flex-col gap-4">
+                        <div class="flex items-center justify-between px-2">
+                            <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                                Done <span id="count-done" class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px]">0</span>
+                            </h2>
+                            <button onclick="addNewTask('done')" class="text-zinc-500 hover:text-white transition-colors">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <div id="done" class="kanban-column flex flex-col gap-3 p-2 rounded-lg"></div>
+                    </div>
+                </main>
+
+                <!-- Zac Thought Feed -->
+                <section class="glass rounded-2xl overflow-hidden border-blue-500/20 shadow-2xl shadow-blue-500/5">
+                    <div class="bg-zinc-900/50 px-5 py-3 border-b border-zinc-800 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="flex gap-1.5">
+                                <div class="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/40"></div>
+                                <div class="w-3 h-3 rounded-full bg-amber-500/20 border border-amber-500/40"></div>
+                                <div class="w-3 h-3 rounded-full bg-emerald-500/20 border border-emerald-500/40"></div>
+                            </div>
+                            <span class="text-xs font-mono text-zinc-500 uppercase tracking-widest ml-2 flex items-center gap-2">
+                                <i data-lucide="terminal" class="w-3 h-3"></i>
+                                Zac_Thought_Feed.log
+                            </span>
+                        </div>
+                        <div id="zac-live-indicator" class="flex items-center gap-2 text-[10px] font-mono text-blue-400">
+                            <span class="relative flex h-2 w-2">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                            </span>
+                            LIVE_STREAM
+                        </div>
+                    </div>
+                    <div id="thought-feed" class="p-6 h-[300px] overflow-y-auto font-mono text-sm space-y-3 scroll-smooth">
+                        <div class="text-zinc-500">Initializing thought stream...</div>
+                    </div>
+                </section>
             </div><!-- End view-kanban -->
 
             <div id="view-docs" class="tab-view hidden">
@@ -242,7 +197,6 @@
                                     <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"></i>
                                     <input type="text" id="docs-search" oninput="filterDocs()" placeholder="Search documents..." class="w-full bg-zinc-950 border border-zinc-800 rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all">
                                 </div>
-                                <!-- Category Filter Pills -->
                                 <div id="docs-filter-container" class="flex flex-wrap gap-1.5 mt-1">
                                     <button onclick="setDocFilter('ALL')" data-filter="ALL" class="doc-filter-btn px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-700/50">ALL</button>
                                     <button onclick="setDocFilter('GUIDE')" data-filter="GUIDE" class="doc-filter-btn px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-700/50">GUIDE</button>
@@ -251,14 +205,7 @@
                                     <button onclick="setDocFilter('PLAN')" data-filter="PLAN" class="doc-filter-btn px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-700/50">PLAN</button>
                                 </div>
                             </div>
-                            <div id="docs-list" class="flex-1 overflow-y-auto p-2 space-y-1">
-                                <!-- Docs items injected here -->
-                                <div class="animate-pulse space-y-2 p-2">
-                                    <div class="h-12 bg-zinc-800/50 rounded-xl"></div>
-                                    <div class="h-12 bg-zinc-800/50 rounded-xl"></div>
-                                    <div class="h-12 bg-zinc-800/50 rounded-xl"></div>
-                                </div>
-                            </div>
+                            <div id="docs-list" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
                         </div>
                     </aside>
                     <!-- Docs Preview -->
@@ -277,16 +224,11 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="flex gap-3">
-                                    <button onclick="window.print()" class="text-zinc-500 hover:text-white transition-colors" title="Print/Export PDF"><i data-lucide="printer" class="w-4 h-4"></i></button>
-                                    <button id="btn-raw" class="text-zinc-500 hover:text-white transition-colors" title="View Source"><i data-lucide="code" class="w-4 h-4"></i></button>
-                                </div>
                             </div>
                             <div id="doc-content" class="flex-1 overflow-y-auto p-10 prose prose-invert scroll-smooth">
                                 <div class="flex flex-col items-center justify-center h-full text-zinc-600">
                                     <i data-lucide="file-text" class="w-16 h-16 mb-6 opacity-10"></i>
                                     <p class="text-sm font-medium">Choose a file from the sidebar to preview its content.</p>
-                                    <p class="text-xs mt-2 opacity-50">High-fidelity rendering with full markdown support.</p>
                                 </div>
                             </div>
                         </div>
@@ -302,9 +244,7 @@
                             Activity History
                         </h2>
                     </div>
-                    <div id="activity-list" class="p-6 space-y-4">
-                        <!-- Activity entries -->
-                    </div>
+                    <div id="activity-list" class="p-6 space-y-4"></div>
                 </section>
             </div>
 
@@ -324,14 +264,10 @@
                                     <th class="pb-3 px-2">Task</th>
                                     <th class="pb-3 px-2">Agent</th>
                                     <th class="pb-3 px-2">Model</th>
-                                    <th class="pb-3 px-2">Input</th>
-                                    <th class="pb-3 px-2">Output</th>
                                     <th class="pb-3 px-2">Cost (est)</th>
                                 </tr>
                             </thead>
-                            <tbody id="usage-table-body" class="divide-y divide-zinc-800/50">
-                                <!-- Usage rows -->
-                            </tbody>
+                            <tbody id="usage-table-body" class="divide-y divide-zinc-800/50"></tbody>
                         </table>
                     </div>
                 </section>
@@ -348,14 +284,7 @@
                     </h2>
                     <span id="agent-count" class="text-xs bg-zinc-800 text-zinc-400 px-2 py-1 rounded-full">0 Active</span>
                 </div>
-                
-                <div id="agent-list" class="flex flex-col gap-4">
-                    <!-- Agent items injected here -->
-                    <div class="animate-pulse flex flex-col gap-3">
-                        <div class="h-16 bg-zinc-800/50 rounded-xl"></div>
-                        <div class="h-16 bg-zinc-800/50 rounded-xl"></div>
-                    </div>
-                </div>
+                <div id="agent-list" class="flex flex-col gap-4"></div>
             </div>
         </aside>
     </div>
@@ -378,231 +307,40 @@
         <span id="toast-message">Board updated</span>
     </div>
 
-    <!-- Export Sync Button (Dynamic) -->
+    <!-- Export Sync Button -->
     <div id="sync-container" class="fixed bottom-6 left-1/2 -translate-x-1/2 transition-all duration-500 transform translate-y-32 opacity-0 z-40">
-        <button onclick="syncToMarkdown()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-full font-bold shadow-2xl flex items-center gap-3 border border-emerald-400/30 animate-bounce-slow">
-            <i data-lucide="refresh-cw" class="w-5 h-5"></i>
-            Sync to TASKS.md (Clipboard)
+        <button onclick="syncToMarkdown()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-full font-bold shadow-2xl flex items-center gap-3 border border-emerald-400/30 animate-bounce-slow">
+            <i data-lucide="save" class="w-6 h-6"></i>
+            SAVE TO LOCAL (Copy TASKS.md)
         </button>
     </div>
 
     <script>
-        // Load Configuration and Initialize
+        // Use 'aiberm/openai/gpt-5.2-codex' coding logic for state and rendering
+        let boardState = { backlog: [], todo: [], inprogress: [], done: [] };
+        let currentAddCol = 'todo';
+        const columns = ['backlog', 'todo', 'inprogress', 'done'];
+
         async function init() {
             try {
-                const configRes = await fetch('config.json');
-                const config = await configRes.json();
+                // Load local tasks.json
+                const res = await fetch('tasks.json');
+                if (res.ok) {
+                    boardState = await res.json();
+                }
                 
-                // GitHub Configuration
-                window.GITHUB_CONFIG = {
-                    token: config.github_token,
-                    owner: 'shawn137080',
-                    repo: 'clawd-workspace',
-                    path: 'TASKS.md',
-                    branch: 'main'
-                };
-
-                // Initialize App
                 initSortable();
-                setInterval(fetchAgentStatus, 5000);
-                
-                // Initial Board Data
-                boardState = {
-                    backlog: [
-                        { id: '0', content: 'Explore potential AI frameworks for sub-agent scaling', project: 'General Tasks' }
-                    ],
-                    todo: [
-                        { id: '1', content: 'Complete RESEARCH_PLAN.md setup', project: 'Ecommerce Research' },
-                        { id: '2', content: 'Review PLAN.md initial steps', project: 'Rental Property Project' },
-                        { id: '3', content: 'Setup Task Dashboard Canvas', project: 'General Tasks' },
-                        { id: '4', content: 'Configure Heartbeat reminders', project: 'General Tasks' }
-                    ],
-                    inprogress: [],
-                    done: [
-                        { id: '5', content: 'Configure OpenRouter and xAI API Keys', project: 'General Tasks' },
-                        { id: '6', content: 'Connect Aiberm Provider', project: 'General Tasks' }
-                    ]
-                };
-
-                fetchAgentStatus();
                 renderBoard();
                 
-                // Immediate Auth Verification
-                githubSync(true);
-
+                setInterval(fetchAgentStatus, 5000);
+                fetchAgentStatus();
+                lucide.createIcons();
             } catch (err) {
-                console.error('Failed to load config.json:', err);
-                updateSyncStatus('error', 'Config Missing');
-                showToast('Configuration error: config.json not found');
+                console.error('Failed to load tasks.json:', err);
+                showToast('Failed to load tasks.json');
             }
         }
 
-        // Use 'aiberm/openai/gpt-5.2-codex' coding logic for state and rendering
-        let boardState = {
-            backlog: [],
-            todo: [],
-            inprogress: [],
-            done: []
-        };
-
-        let currentAddCol = 'todo';
-        let hasUnsavedChanges = false;
-        let isSyncing = false;
-
-        async function updateSyncStatus(status, message) {
-            const container = document.getElementById('sync-status-indicator');
-            const text = document.getElementById('sync-text');
-            const icon = document.getElementById('sync-icon');
-            
-            if (!container || !text || !icon) return;
-
-            container.className = `glass px-4 py-2 rounded-full flex items-center gap-2 sync-status ${status}`;
-            text.textContent = message;
-            
-            let iconName = 'cloud-check';
-            if (status === 'syncing') iconName = 'refresh-cw';
-            if (status === 'error') iconName = 'cloud-off';
-            
-            icon.setAttribute('data-lucide', iconName);
-            if (status === 'syncing') icon.classList.add('animate-spin');
-            else icon.classList.remove('animate-spin');
-            
-            lucide.createIcons();
-        }
-
-        async function githubSync(isInitialCheck = false) {
-            if (!window.GITHUB_CONFIG || !window.GITHUB_CONFIG.token) {
-                console.warn('[GitHub Sync] No token available yet');
-                return;
-            }
-            if (isSyncing) return;
-            isSyncing = true;
-            updateSyncStatus('syncing', isInitialCheck ? 'Verifying Auth...' : 'Syncing...');
-
-            try {
-                // 1. Generate Markdown from state
-                const mdContent = generateMarkdown();
-                
-                // 2. Get current file SHA with robust error handling
-                console.log(`[GitHub Sync] Starting ${isInitialCheck ? 'Initial Auth Check' : 'Update'} for ${window.GITHUB_CONFIG.owner}/${window.GITHUB_CONFIG.repo}`);
-                
-                let getRes;
-                try {
-                    getRes = await fetch(`https://api.github.com/repos/${window.GITHUB_CONFIG.owner}/${window.GITHUB_CONFIG.repo}/contents/${window.GITHUB_CONFIG.path}`, {
-                        headers: { 'Authorization': `token ${window.GITHUB_CONFIG.token}` }
-                    });
-                } catch (networkErr) {
-                    throw new Error('Network Error: Could not connect to GitHub API.');
-                }
-                
-                console.log(`[GitHub Sync] Fetch response status: ${getRes.status}`);
-
-                if (getRes.status === 401 || getRes.status === 403) {
-                    const errBody = await getRes.json().catch(() => ({ message: 'No body' }));
-                    console.error('[GitHub Sync] Auth Failed:', errBody);
-                    throw new Error(`Authentication Error (${getRes.status}): ${errBody.message || 'Bad credentials'}`);
-                }
-
-                let sha = null;
-                if (getRes.ok) {
-                    const data = await getRes.json();
-                    sha = data.sha;
-                    console.log('[GitHub Sync] Found existing file, SHA:', sha);
-                } else if (getRes.status === 404) {
-                    console.log('[GitHub Sync] File not found, creating new.');
-                } else {
-                    const errData = await getRes.json().catch(() => ({ message: 'Unknown error' }));
-                    console.error('[GitHub Sync] Fetch Error:', errData);
-                    throw new Error(`GitHub API Error (${getRes.status}): ${errData.message}`);
-                }
-
-                // If it's just an initial check, we're done here
-                if (isInitialCheck) {
-                    console.log('[GitHub Sync] Auth check successful.');
-                    updateSyncStatus('synced', 'Auth Verified');
-                    isSyncing = false;
-                    return;
-                }
-
-                // 3. Update file
-                const putRes = await fetch(`https://api.github.com/repos/${window.GITHUB_CONFIG.owner}/${window.GITHUB_CONFIG.repo}/contents/${window.GITHUB_CONFIG.path}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `token ${window.GITHUB_CONFIG.token}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        message: `Update TASKS.md via Kanban [${new Date().toISOString()}]`,
-                        content: btoa(unescape(encodeURIComponent(mdContent))),
-                        sha: sha,
-                        branch: window.GITHUB_CONFIG.branch
-                    })
-                });
-
-                console.log(`[GitHub Sync] Put response status: ${putRes.status}`);
-
-                if (putRes.ok) {
-                    updateSyncStatus('synced', 'Cloud Synced');
-                    showToast('GitHub updated');
-                } else {
-                    const err = await putRes.json().catch(() => ({ message: 'No body' }));
-                    console.error('[GitHub Sync] Put Failed:', err);
-                    if (putRes.status === 401 || putRes.status === 403) {
-                        throw new Error('Authentication Error: Token is invalid or expired.');
-                    }
-                    throw new Error(`Push Error (${putRes.status}): ${err.message}`);
-                }
-            } catch (err) {
-                console.error('[GitHub Sync] Critical Error:', err);
-                updateSyncStatus('error', 'Sync Failed');
-                showToast(err.message);
-            } finally {
-                isSyncing = false;
-            }
-        }
-
-        function generateMarkdown() {
-            let md = "# 📋 Task Management Dashboard\n\n## 🚀 Active Projects\n";
-            const projects = {};
-            const allTasks = [...boardState.backlog, ...boardState.todo, ...boardState.inprogress, ...boardState.done];
-            
-            allTasks.forEach(t => {
-                if (!projects[t.project]) projects[t.project] = [];
-                projects[t.project].push(t);
-            });
-
-            Object.keys(projects).filter(p => p !== 'General Tasks').forEach(p => {
-                md += `- [ ] **${p}**\n`;
-                projects[p].filter(t => !boardState.done.find(dt => dt.id === t.id)).forEach(t => {
-                    md += `    - [ ] ${t.content}\n`;
-                });
-            });
-
-            md += "\n## 📥 General Tasks\n";
-            (projects['General Tasks'] || []).filter(t => !boardState.done.find(dt => dt.id === t.id)).forEach(t => {
-                md += `- [ ] ${t.content}\n`;
-            });
-
-            md += "\n## ✅ Completed\n";
-            boardState.done.forEach(t => {
-                md += `- [x] ${t.content}\n`;
-            });
-            return md;
-        }
-
-        const agentConfig = {
-            uiux: { icon: 'palette', color: 'text-pink-400', bg: 'bg-pink-500/10' },
-            researcher: { icon: 'search', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-            deployer: { icon: 'globe', color: 'text-blue-400', bg: 'bg-blue-500/10' },
-            debugger: { icon: 'wrench', color: 'text-amber-400', bg: 'bg-amber-500/10' },
-            coder: { icon: 'code', color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
-            default: { icon: 'bot', color: 'text-purple-400', bg: 'bg-purple-500/10' }
-        };
-
-        // Initialize
-        lucide.createIcons();
-        const columns = ['backlog', 'todo', 'inprogress', 'done'];
-        
         function initSortable() {
             columns.forEach(id => {
                 const el = document.getElementById(id);
@@ -615,16 +353,25 @@
                             updateStateFromDOM(); 
                             renderCounters(); 
                             markChanged();
-                            githubSync(); // Trigger Auto-Sync
-                            showToast('Task moved'); 
                         }
                     });
                 }
             });
         }
 
+        function updateStateFromDOM() {
+            columns.forEach(col => {
+                const columnEl = document.getElementById(col);
+                const taskEls = columnEl.querySelectorAll('.task-card');
+                boardState[col] = Array.from(taskEls).map(el => ({
+                    id: el.dataset.id,
+                    content: el.querySelector('p').textContent,
+                    project: el.dataset.project
+                }));
+            });
+        }
+
         function markChanged() {
-            hasUnsavedChanges = true;
             const container = document.getElementById('sync-container');
             if (container) {
                 container.classList.remove('translate-y-32', 'opacity-0');
@@ -634,8 +381,6 @@
 
         function syncToMarkdown() {
             let md = "# 📋 Task Management Dashboard\n\n## 🚀 Active Projects\n";
-            
-            // Organize tasks by project for markdown
             const projects = {};
             const allTasks = [...boardState.backlog, ...boardState.todo, ...boardState.inprogress, ...boardState.done];
             
@@ -644,7 +389,6 @@
                 projects[t.project].push(t);
             });
 
-            // Active Projects (exclude Done tasks and General)
             Object.keys(projects).filter(p => p !== 'General Tasks').forEach(p => {
                 md += `- [ ] **${p}**\n`;
                 projects[p].filter(t => !boardState.done.find(dt => dt.id === t.id)).forEach(t => {
@@ -652,155 +396,20 @@
                 });
             });
 
-            // General Tasks
             md += "\n## 📥 General Tasks\n";
             (projects['General Tasks'] || []).filter(t => !boardState.done.find(dt => dt.id === t.id)).forEach(t => {
                 md += `- [ ] ${t.content}\n`;
             });
 
-            // Completed
             md += "\n## ✅ Completed\n";
             boardState.done.forEach(t => {
                 md += `- [x] ${t.content}\n`;
             });
 
             navigator.clipboard.writeText(md).then(() => {
-                showToast('TASKS.md copied to clipboard!');
-                hasUnsavedChanges = false;
+                showToast('Task copied! Paste it to Zac in Telegram to save.');
                 const container = document.getElementById('sync-container');
                 container.classList.add('translate-y-32', 'opacity-0');
-                container.classList.remove('translate-y-0', 'opacity-100');
-            });
-        }
-
-        function updateStateFromDOM() {
-            columns.forEach(col => {
-                const columnEl = document.getElementById(col);
-                const taskEls = columnEl.querySelectorAll('.task-card');
-                boardState[col] = Array.from(taskEls).map(el => {
-                    return {
-                        id: el.dataset.id,
-                        content: el.querySelector('p').textContent,
-                        project: el.dataset.project
-                    };
-                });
-            });
-        }
-
-        async function fetchAgentStatus() {
-            try {
-                // Fetch with cache-busting and robust error handling
-                const [agentsRes, zacRes] = await Promise.all([
-                    fetch(`agents_status.json?t=${Date.now()}`),
-                    fetch(`zac_status.json?t=${Date.now()}`)
-                ]);
-                
-                if (agentsRes.ok) {
-                    const agents = await agentsRes.json();
-                    renderAgents(agents);
-                } else {
-                    renderEmptyAgents('Agent status source missing');
-                }
-                
-                if (zacRes.ok) {
-                    const zacStatus = await zacRes.json();
-                    updateZacState(zacStatus);
-                }
-            } catch (err) {
-                console.error('Failed to fetch status:', err);
-                renderEmptyAgents('Status offline');
-            }
-        }
-
-        function renderEmptyAgents(message = 'No active agents') {
-            const container = document.getElementById('agent-list');
-            const countEl = document.getElementById('agent-count');
-            if (countEl) countEl.textContent = '0 Active';
-            if (container) {
-                container.innerHTML = `
-                    <div class="flex flex-col items-center justify-center py-8 text-zinc-600 border-2 border-dashed border-zinc-800 rounded-xl">
-                        <i data-lucide="ghost" class="w-8 h-8 mb-2 opacity-20"></i>
-                        <p class="text-xs uppercase tracking-widest font-medium">${message}</p>
-                    </div>
-                `;
-                lucide.createIcons();
-            }
-        }
-
-        function renderAgents(agents) {
-            const container = document.getElementById('agent-list');
-            const countEl = document.getElementById('agent-count');
-            if (!container) return;
-
-            // Filter for RUNNING status just in case, though the script handles it
-            const activeAgents = agents.filter(a => a.status === 'RUNNING');
-            
-            if (!activeAgents || activeAgents.length === 0) {
-                renderEmptyAgents();
-                return;
-            }
-            
-            if (countEl) countEl.textContent = `${activeAgents.length} Active`;
-
-            container.innerHTML = '';
-            activeAgents.forEach(agent => {
-                const config = agentConfig[agent.type] || agentConfig.default;
-                
-                const card = document.createElement('div');
-                card.className = `glass p-4 rounded-xl border-l-2 border-l-blue-500 bg-blue-500/5 hover:bg-zinc-800/40 transition-all`;
-                card.innerHTML = `
-                    <div class="flex items-center gap-3 mb-2">
-                        <div class="p-2 rounded-lg ${config.bg} ${config.color}">
-                            <i data-lucide="${config.icon}" class="w-4 h-4"></i>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <h4 class="text-sm font-semibold truncate text-zinc-200">${agent.label}</h4>
-                            <div class="flex items-center gap-2">
-                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
-                                <span class="text-[10px] text-blue-400 uppercase tracking-tight font-mono">${agent.status}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="text-[11px] text-zinc-400 line-clamp-2 italic">"${agent.task}"</p>
-                `;
-                container.appendChild(card);
-            });
-            lucide.createIcons();
-        }
-
-        function updateZacState(data) {
-            // Update Header Status
-            const statusText = document.getElementById('status-text');
-            if (statusText) statusText.textContent = data.status || 'Active';
-            
-            const dotColor = data.status === 'Thinking' ? 'bg-amber-500' : (data.status === 'Working' ? 'bg-blue-500' : 'bg-emerald-500');
-            const statusDot = document.getElementById('status-dot');
-            const statusPing = document.getElementById('status-ping');
-            if (statusDot) statusDot.className = `relative inline-flex rounded-full h-3 w-3 ${dotColor}`;
-            if (statusPing) statusPing.className = `animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${dotColor}`;
-
-            // Update Thought Feed
-            if (data.thoughts && data.thoughts.length > 0) {
-                const feed = document.getElementById('thought-feed');
-                if (feed) {
-                    feed.innerHTML = data.thoughts.map(t => `
-                        <div class="flex gap-4 group">
-                            <span class="text-zinc-600 shrink-0 select-none">[${t.time}]</span>
-                            <div class="flex-1">
-                                <span class="text-blue-400 font-bold">$</span>
-                                <span class="text-zinc-300 ml-2">${t.text}</span>
-                            </div>
-                        </div>
-                    `).join('');
-                    feed.scrollTop = feed.scrollHeight;
-                }
-            }
-        }
-
-        function renderCounters() {
-            columns.forEach(col => {
-                const el = document.getElementById(`count-${col}`);
-                if (el) el.textContent = boardState[col].length;
             });
         }
 
@@ -837,6 +446,13 @@
             lucide.createIcons();
         }
 
+        function renderCounters() {
+            columns.forEach(col => {
+                const el = document.getElementById(`count-${col}`);
+                if (el) el.textContent = boardState[col].length;
+            });
+        }
+
         function addNewTask(col) {
             currentAddCol = col;
             document.getElementById('task-modal').classList.remove('hidden');
@@ -854,34 +470,18 @@
             const input = document.getElementById('task-input');
             const content = input.value.trim();
             if (content) {
-                const newTask = { 
-                    id: Date.now().toString(), 
-                    content, 
-                    project: 'General Tasks' 
-                };
-                
-                // 1. Update State
+                const newTask = { id: Date.now().toString(), content, project: 'General Tasks' };
                 boardState[currentAddCol].push(newTask);
-                
-                // 2. Immediate UI Update
                 renderBoard(); 
-                
-                // 3. UI Feedback
                 closeModal(); 
-                showToast('Task added to ' + currentAddCol);
                 markChanged();
-                githubSync(); // Trigger Auto-Sync
-                
-                // 4. Input Reset (Done in closeModal but redundant for safety)
-                input.value = '';
             }
         }
 
         function deleteTask(id) {
             columns.forEach(c => boardState[c] = boardState[c].filter(t => t.id !== id));
             renderBoard(); 
-            githubSync(); // Trigger Auto-Sync
-            showToast('Task deleted');
+            markChanged();
         }
 
         function copyData() {
@@ -892,253 +492,67 @@
             const t = document.getElementById('toast');
             const msgEl = document.getElementById('toast-message');
             if (msgEl) msgEl.textContent = msg;
-            if (t) {
-                t.classList.remove('translate-y-20', 'opacity-0');
-                setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3000);
-            }
+            t.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 4000);
         }
 
-        // Tab Switching Logic
         function switchTab(tab) {
-            // Update UI
             document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
             document.getElementById(`view-${tab}`).classList.remove('hidden');
-            
-            // Update Buttons
             ['kanban', 'docs', 'activity', 'usage'].forEach(t => {
                 const btn = document.getElementById(`tab-${t}`);
-                if (btn) {
-                    if (t === tab) {
-                        btn.className = "px-6 py-2 rounded-lg text-sm font-bold transition-all bg-blue-600 text-white shadow-lg";
-                    } else {
-                        btn.className = "px-6 py-2 rounded-lg text-sm font-bold transition-all text-zinc-400 hover:text-white";
-                    }
-                }
+                if (btn) btn.className = t === tab ? "px-6 py-2 rounded-lg text-sm font-bold transition-all bg-blue-600 text-white shadow-lg" : "px-6 py-2 rounded-lg text-sm font-bold transition-all text-zinc-400 hover:text-white";
             });
-
-            if (tab === 'docs') fetchDocsIndex();
-            if (tab === 'activity') fetchActivityLog();
-            if (tab === 'usage') fetchUsageStats();
         }
 
-        let docsData = [];
-        let currentDocId = null;
-        let currentDocFilter = 'RESEARCH';
-
-        async function fetchDocsIndex() {
+        async function fetchAgentStatus() {
             try {
-                const res = await fetch(`docs_index.json?t=${Date.now()}`);
-                if (res.ok) {
-                    docsData = await res.json();
-                    filterDocs(); // Apply initial filter
-                }
-            } catch (e) { console.error(e); }
+                const [agentsRes, zacRes] = await Promise.all([
+                    fetch(`agents_status.json?t=${Date.now()}`),
+                    fetch(`zac_status.json?t=${Date.now()}`)
+                ]);
+                if (agentsRes.ok) renderAgents(await agentsRes.json());
+                if (zacRes.ok) updateZacState(await zacRes.json());
+            } catch (err) {}
         }
 
-        function setDocFilter(filter) {
-            currentDocFilter = filter;
-            filterDocs();
-        }
-
-        function filterDocs() {
-            const query = document.getElementById('docs-search').value.toLowerCase();
-            
-            // Update Filter Button Styles
-            document.querySelectorAll('.doc-filter-btn').forEach(btn => {
-                const filter = btn.dataset.filter;
-                if (filter === currentDocFilter) {
-                    btn.className = "doc-filter-btn px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all bg-blue-600 text-white border border-blue-500 shadow-lg shadow-blue-500/20";
-                } else {
-                    btn.className = "doc-filter-btn px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-700/50";
-                }
-            });
-
-            const filtered = docsData.filter(d => {
-                const matchesQuery = d.title.toLowerCase().includes(query) || 
-                                   d.tag.toLowerCase().includes(query) ||
-                                   d.path.toLowerCase().includes(query);
-                const matchesFilter = currentDocFilter === 'ALL' || d.tag === currentDocFilter;
-                return matchesQuery && matchesFilter;
-            });
-            renderDocsList(filtered);
-        }
-
-        const tagColors = {
-            'GUIDE': 'bg-blue-500/10 text-blue-400',
-            'HISTORY': 'bg-emerald-500/10 text-emerald-400',
-            'RESEARCH': 'bg-purple-500/10 text-purple-400',
-            'PLAN': 'bg-orange-500/10 text-orange-400'
-        };
-
-        function renderDocsList(docs) {
-            const container = document.getElementById('docs-list');
-            if (!container) return;
-            
-            if (docs.length === 0) {
-                container.innerHTML = '<p class="text-zinc-500 text-xs p-4 italic text-center">No documents found.</p>';
-                return;
-            }
-
-            container.innerHTML = docs.map(doc => {
-                const isActive = currentDocId === doc.id;
-                const updatedDate = new Date(doc.updated);
-                const dateStr = updatedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                const colorClass = tagColors[doc.tag] || 'bg-zinc-800 text-zinc-500';
-                
-                return `
-                <button onclick="loadDocument('${doc.id}')" 
-                    class="doc-item w-full text-left p-3 rounded-xl hover:bg-zinc-800/40 transition-all group border border-transparent hover:border-zinc-700/30 flex items-center gap-3 ${isActive ? 'active shadow-lg shadow-blue-500/20' : ''}">
-                    <div class="p-2 rounded-lg ${isActive ? 'bg-white/20' : 'bg-zinc-900 border border-zinc-800'} text-zinc-400 group-hover:text-white transition-colors">
-                        <i data-lucide="${doc.icon || 'file-text'}" class="w-4 h-4"></i>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center justify-between mb-0.5">
-                            <span class="text-xs font-bold ${isActive ? 'text-white' : 'text-zinc-300'} group-hover:text-white truncate">${doc.title}</span>
-                            <span class="text-[9px] ${isActive ? 'text-blue-100' : 'text-zinc-500'} font-medium shrink-0 ml-2">${dateStr}</span>
+        function renderAgents(agents) {
+            const container = document.getElementById('agent-list');
+            const countEl = document.getElementById('agent-count');
+            const activeAgents = agents.filter(a => a.status === 'RUNNING');
+            countEl.textContent = `${activeAgents.length} Active`;
+            container.innerHTML = activeAgents.map(agent => `
+                <div class="glass p-4 rounded-xl border-l-2 border-l-blue-500 bg-blue-500/5">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="p-2 rounded-lg bg-purple-500/10 text-purple-400">
+                            <i data-lucide="bot" class="w-4 h-4"></i>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter ${isActive ? 'bg-white/20 text-white' : colorClass + ' group-hover:brightness-125'}">${doc.tag}</span>
-                            <span class="text-[9px] ${isActive ? 'text-blue-200' : 'text-zinc-600'} truncate">${doc.category}</span>
-                        </div>
-                    </div>
-                </button>
-            `;}).join('');
-            lucide.createIcons();
-        }
-
-        async function loadDocument(id) {
-            currentDocId = id;
-            const doc = docsData.find(d => d.id === id);
-            if (!doc) return;
-
-            // Update List Selection (re-filters to preserve UI state)
-            filterDocs();
-
-            // UI Feedback
-            const titleEl = document.getElementById('doc-title');
-            const pathEl = document.getElementById('doc-meta-path');
-            const tagEl = document.getElementById('doc-meta-tag');
-            const mainIcon = document.getElementById('doc-main-icon');
-            const contentEl = document.getElementById('doc-content');
-
-            titleEl.textContent = doc.title;
-            pathEl.textContent = `${doc.path} • ${(doc.size/1024).toFixed(1)} KB`;
-            tagEl.textContent = doc.tag;
-            tagEl.className = `text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter ${tagColors[doc.tag] || 'bg-blue-500/10 text-blue-400'}`;
-            mainIcon.setAttribute('data-lucide', doc.icon || 'file-text');
-            lucide.createIcons();
-
-            contentEl.innerHTML = '<div class="flex flex-col items-center justify-center h-full"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div><p class="mt-4 text-xs text-zinc-500 font-mono animate-pulse">RENDERING_MARKDOWN...</p></div>';
-
-            try {
-                const res = await fetch(`${doc.path}?t=${Date.now()}`);
-                if (res.ok) {
-                    const content = await res.text();
-                    
-                    // Configure Marked for security and features
-                    marked.setOptions({
-                        highlight: function(code, lang) {
-                            if (lang && hljs.getLanguage(lang)) {
-                                return hljs.highlight(code, { language: lang }).value;
-                            }
-                            return hljs.highlightAuto(code).value;
-                        },
-                        gfm: true,
-                        breaks: true,
-                        headerIds: true,
-                        mangle: false
-                    });
-
-                    contentEl.innerHTML = marked.parse(content);
-                    
-                    // Re-run highlighting for all code blocks
-                    contentEl.querySelectorAll('pre code').forEach((block) => {
-                        hljs.highlightElement(block);
-                    });
-                } else {
-                    contentEl.innerHTML = `<div class="p-8 border border-red-500/20 bg-red-500/5 rounded-2xl text-red-400">
-                        <h3 class="font-bold mb-2">IO_ERROR</h3>
-                        <p class="text-sm">Failed to load resource: ${doc.path}</p>
-                    </div>`;
-                }
-            } catch (e) {
-                contentEl.innerHTML = `<p class="text-red-400">Error: ${e.message}</p>`;
-            }
-        }
-
-        async function fetchActivityLog() {
-            try {
-                const res = await fetch(`activity_log.json?t=${Date.now()}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    renderActivityLog(data);
-                }
-            } catch (e) { console.error(e); }
-        }
-
-        async function fetchUsageStats() {
-            try {
-                const res = await fetch(`usage_stats.json?t=${Date.now()}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    renderUsageStats(data);
-                }
-            } catch (e) { console.error(e); }
-        }
-
-        function renderActivityLog(logs) {
-            const container = document.getElementById('activity-list');
-            if (!container) return;
-            
-            if (logs.length === 0) {
-                container.innerHTML = '<p class="text-zinc-500 italic">No activity recorded yet.</p>';
-                return;
-            }
-
-            container.innerHTML = logs.map(log => {
-                const date = new Date(log.timestamp);
-                const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                const isMain = log.agent.includes('Main');
-                
-                return `
-                    <div class="flex gap-4 p-4 rounded-xl glass border-l-4 ${isMain ? 'border-l-blue-500' : 'border-l-purple-500'} bg-zinc-900/30">
-                        <div class="shrink-0 text-xs font-mono text-zinc-500 pt-1">${timeStr}</div>
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="text-xs font-bold uppercase tracking-wider ${isMain ? 'text-blue-400' : 'text-purple-400'}">${log.agent}</span>
-                                <span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-500 font-mono">${log.status}</span>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-sm font-semibold truncate text-zinc-200">${agent.label}</h4>
+                            <div class="flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                                <span class="text-[10px] text-blue-400 font-mono">RUNNING</span>
                             </div>
-                            <p class="text-sm text-zinc-300">${log.action}</p>
                         </div>
                     </div>
-                `;
-            }).join('');
+                    <p class="text-[11px] text-zinc-400 italic">"${agent.task}"</p>
+                </div>
+            `).join('');
+            lucide.createIcons();
         }
 
-        function renderUsageStats(stats) {
-            const tbody = document.getElementById('usage-table-body');
-            const totalEl = document.getElementById('total-cost');
-            if (!tbody) return;
-
-            let totalCost = 0;
-            tbody.innerHTML = stats.map(row => {
-                totalCost += parseFloat(row.cost);
-                return `
-                    <tr class="hover:bg-zinc-800/30 transition-colors">
-                        <td class="py-4 px-2 text-zinc-300 max-w-[200px] truncate" title="${row.task}">${row.task}</td>
-                        <td class="py-4 px-2"><span class="text-xs px-2 py-1 rounded bg-zinc-800 text-zinc-400">${row.agent}</span></td>
-                        <td class="py-4 px-2 text-zinc-500 text-xs">${row.model}</td>
-                        <td class="py-4 px-2 text-zinc-400">${row.input.toLocaleString()}</td>
-                        <td class="py-4 px-2 text-zinc-400">${row.output.toLocaleString()}</td>
-                        <td class="py-4 px-2 text-emerald-400 font-bold">$${row.cost}</td>
-                    </tr>
-                `;
-            }).join('');
-
-            if (totalEl) totalEl.textContent = `$${totalCost.toFixed(4)}`;
+        function updateZacState(data) {
+            document.getElementById('status-text').textContent = data.status || 'Active';
+            const dotColor = data.status === 'Thinking' ? 'bg-amber-500' : (data.status === 'Working' ? 'bg-blue-500' : 'bg-emerald-500');
+            document.getElementById('status-dot').className = `relative inline-flex rounded-full h-3 w-3 ${dotColor}`;
+            document.getElementById('status-ping').className = `animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${dotColor}`;
+            if (data.thoughts) {
+                document.getElementById('thought-feed').innerHTML = data.thoughts.map(t => `
+                    <div class="flex gap-4"><span class="text-zinc-600">[${t.time}]</span><div class="flex-1"><span class="text-blue-400 font-bold">$</span><span class="text-zinc-300 ml-2">${t.text}</span></div></div>
+                `).join('');
+            }
         }
 
-        // Initialize App
         init();
     </script>
 </body>
